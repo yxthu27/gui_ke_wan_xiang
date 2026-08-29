@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>随逛 · 贵客万象</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="stroll.css">
+  <style>
+    :root {
+      --paper: #f8f5ed;
+      --paper-2: #eeece4;
+      --paper-edge: #d8ded9;
+      --ink: #2b2a26;
+      --ink-soft: #4a4740;
+      --ink-mute: #8a8578;
+      --mount: #173c33;
+      --mount-2: #4a6455;
+      --seal: #b64a3a;
+      --gold: #ae8b55;
+      --serif-cn: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif-en: "Cormorant Garamond", "Times New Roman", serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #1a1a19; }
+    body { color: var(--ink); font-family: var(--serif-cn); -webkit-font-smoothing: antialiased; }
+    .stage { width: 100vw; height: 100vh; display: flex; justify-content: center; }
+    .phone { position: relative; width: min(100vw, calc(100vh * 9 / 16)); height: 100vh; overflow: hidden; background: var(--paper); box-shadow: 0 0 60px rgba(0,0,0,.5); }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="phone">
+      <div class="stroll" id="stroll-root">
+        <div class="stroll-map-wrap">
+          <div class="stroll-map" id="stroll-map"></div>
+          <div class="stroll-mist" aria-hidden="true"></div>
+          <div class="stroll-preview" id="stroll-preview" hidden></div>
+        </div>
+        <div class="stroll-modes" id="stroll-modes" role="tablist" aria-label="随逛模式">
+          <button class="stroll-mode" type="button" data-mode="guest" role="tab">贵客<span class="stroll-mode-dot" id="stroll-mode-dot" hidden></span></button>
+          <button class="stroll-mode" type="button" data-mode="global" role="tab">全局</button>
+        </div>
+        <div class="stroll-guide" id="stroll-guide" hidden></div>
+        <div class="stroll-sheet" id="stroll-sheet" hidden></div>
+        <div class="stroll-dock">
+          <div class="stroll-confirm" id="stroll-confirm" hidden></div>
+          <div class="stroll-cabinet">
+            <div class="stroll-cabinet-rail" id="stroll-pinned"></div>
+            <div class="stroll-cabinet-scroll" id="stroll-enrich"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gcoord@0.3.2/dist/gcoord.js"></script>
+  <script src="config.js"></script>
+  <script src="stroll-core.js"></script>
+  <script src="session-store.js"></script>
+  <script src="detail-view.js"></script>
+  <script src="stroll.js"></script>
+  <script>window.GuikeStroll.onShow();</script>
+</body>
+</html>

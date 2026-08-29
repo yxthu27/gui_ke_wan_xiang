@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <!-- 小侗族少女 IP：行走帧，侧身向右，脸部朝向观者 -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- 银饰头冠与发髻 -->
+    <path d="M13.5 10.4c1.4-5.5 6-8.1 10.8-6.9 2.7.7 4.8 2.6 5.9 5.2" fill="#d9ddd5" stroke="#7c8b87" stroke-width="1.25"/>
+    <path d="M15.1 8.9c3.8-2.5 8.7-2.6 12.5-.1M18.3 5.6v3.1M22 4.6V8M25.7 5.7v3" stroke="#f5f1e4" stroke-width="1.15"/>
+    <circle cx="13.8" cy="11" r="3.1" fill="#2f3838"/>
+    <path d="M13.5 8.9c.9-1.7 2.1-2.4 3.7-2.5" stroke="#7c8b87" stroke-width="1.2"/>
+    <!-- 正视小脸，身体侧身 -->
+    <ellipse cx="22.4" cy="12.3" rx="5.5" ry="5.9" fill="#f0caa8" stroke="#8b5f4b" stroke-width="1"/>
+    <path d="M17.5 10.6c1.8-3 7.8-3.8 10.2-.7M17.3 11c.4 3.2 1.5 5.4 3.2 6.5" stroke="#2f3838" stroke-width="2.1"/>
+    <circle cx="21" cy="12.3" r=".78" fill="#2b2a26"/>
+    <circle cx="24.8" cy="12.3" r=".78" fill="#2b2a26"/>
+    <path d="M22.1 15.2c.8.5 1.5.5 2.2 0" stroke="#a15d54" stroke-width=".85"/>
+    <path d="M27.7 13.6v3.1" stroke="#7c8b87" stroke-width="1.1"/>
+    <circle cx="27.7" cy="17.4" r="1.15" fill="#d9ddd5" stroke="#7c8b87" stroke-width=".7"/>
+    <!-- 靛蓝对襟上衣 -->
+    <path d="M18.6 18.2c3.5-1.4 7.7-.1 9.2 3.7l1.8 8.8H15.2l1.4-8.1c.3-2 1-3.4 2-4.4z" fill="#405d62" stroke="#2f4548" stroke-width="1.15"/>
+    <path d="M21 18.3v11.9M17.3 22.2c3.1 1.4 7.3 1.4 10.2 0" stroke="#e6d7a7" stroke-width="1.1"/>
+    <path d="M23.2 20.3l1.8 1.7-1.8 1.7-1.7-1.7zM23.2 25.1l1.8 1.7-1.8 1.7-1.7-1.7z" fill="#d8a957"/>
+    <!-- 摆动手臂 -->
+    <path d="M17.2 23.4c-2.6.7-4 2.6-4.3 5.1M27.4 22.2c3 1.1 4.3 3.4 4.1 5.8" stroke="#405d62" stroke-width="3.15"/>
+    <path d="M12.9 28.4l-1.1.7M31.4 28l1.3.3" stroke="#f0caa8" stroke-width="2.1"/>
+    <!-- 百褶裙与绣边 -->
+    <path d="M16.1 29.5h13.7l2.4 5.8H13.6z" fill="#58706c" stroke="#2f4548" stroke-width="1.1"/>
+    <path d="M15.5 31.3h15.1" stroke="#d8a957" stroke-width="1.25"/>
+    <path d="M17.5 31.6v3M21 31.6v3M24.5 31.6v3M28 31.6v3" stroke="#d7e1d4" stroke-width=".8"/>
+    <!-- 交替步伐 -->
+    <path d="M19.3 35.3l-3.4 4.2h-2M26.8 35.3l3 4.2h2.2" stroke="#2f3838" stroke-width="2.15"/>
+  </g>
+</svg>

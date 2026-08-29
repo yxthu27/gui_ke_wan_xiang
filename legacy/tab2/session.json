@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "planned": true,
+  "answers": {
+    "wishes": ["cityLife", "guizhouTaste"],
+    "trip": {
+      "durationDays": 3,
+      "startLocation": {
+        "type": "preset",
+        "name": "贵阳北站",
+        "lat": 26.65321,
+        "lng": 106.67473
+      },
+      "endLocation": {
+        "type": "preset",
+        "name": "贵阳龙洞堡国际机场",
+        "lat": 26.54187,
+        "lng": 106.80166
+      },
+      "startDate": null,
+      "endDate": null
+    },
+    "pace": "balanced",
+    "mobility": {
+      "transportModes": ["publicTransit", "walking"],
+      "canChangeHotel": false,
+      "maxTransferMinutes": 60
+    },
+    "interests": ["localFood", "historyMuseum"],
+    "boundaries": {
+      "dietary": ["noSpicy"],
+      "companions": ["friends"],
+      "experience": [],
+      "itinerary": ["noHotelChange"],
+      "custom": {
+        "text": "",
+        "matchedTags": []
+      }
+    }
+  },
+  "derived": {
+    "persona": "ganchang"
+  },
+  "itinerary": {
+    "todayPoiIds": ["qianling-east"],
+    "visitedPoiIds": []
+  },
+  "context": {
+    "demoLocation": {
+      "lat": 26.5872,
+      "lng": 106.7074
+    },
+    "demoDate": "2026-08-29"
+  }
+}
