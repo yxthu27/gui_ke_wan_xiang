@@ -1151,7 +1151,21 @@
   text-shadow: none;
   box-shadow: 0 3px 10px rgba(23,60,51,.1);
   backdrop-filter: blur(7px);
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 160ms ease, transform 160ms ease;
 }
+
+.stroll-pin:hover .stroll-pin-name,
+.stroll-pin:focus-within .stroll-pin-name,
+.stroll-pin.is-focus .stroll-pin-name,
+.stroll-pin.is-today .stroll-pin-name {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stroll-mode { min-height: 44px; }
+.stroll-tag { min-height: 44px; }
 
 .stroll-pin-badge,
 .stroll-pin-kid {

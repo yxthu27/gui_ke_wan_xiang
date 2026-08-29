@@ -262,7 +262,9 @@
       });
       const marker = L.marker([poi.lat, poi.lng], {
         icon,
-        keyboard: false,
+        keyboard: poi.active,
+        title: poi.name,
+        alt: poi.name,
         interactive: poi.active,
         zIndexOffset: poi.active ? list.length - index : -100,
       }).addTo(state.map);

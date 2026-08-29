@@ -94,6 +94,10 @@
   }
 }
 
+@utility scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
 /* scroll-fade */
 @property --scroll-fade-t {
   syntax: "<length-percentage>";

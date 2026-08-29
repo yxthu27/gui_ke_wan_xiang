@@ -123,7 +123,10 @@ npm run dev
 STEPFUN_BASE_URL=https://api.stepfun.com/step_plan/v1
 STEPFUN_API_KEY=你的服务端接口密钥
 STEPFUN_CHAT_MODEL=step-3.7-flash
-STEPFUN_TIMEOUT_MS=65000
+STEPFUN_TIMEOUT_MS=20000
+STEPFUN_IMAGE_BASE_URL=https://api.stepfun.com/v1
+STEPFUN_IMAGE_MODEL=step-image-edit-2
+STEPFUN_IMAGE_TIMEOUT_MS=65000
 ```
 
 密钥只会由服务端 API 路由读取，不应写入客户端代码或提交到 Git。未配置密钥时，六问解析和行程生成会自动使用本地降级逻辑，产品流程仍可完整运行。
@@ -135,6 +138,13 @@ STEPFUN_TIMEOUT_MS=65000
 | `POST /api/qijing/chat` | 理解六问自由输入并生成安全的 `draftPatch` |
 | `POST /api/qijing/plan` | 根据客态结晶生成结构化行程 |
 | `POST /api/qijing/refine` | 在保护心愿与边界的前提下微调现有行程 |
+| `POST /api/qijing/cutout` | 用 StepFun 图像编辑生成纯色背景蒙版，供个人页提取透明主体 |
+
+### 个人页 AI 抠图
+
+抠图采用可降级的混合链路：浏览器先把照片最长边压到 2048 像素，经服务端代理发送给 `step-image-edit-2`，要求模型保持主体不变并将背景替换成纯品红色；浏览器随后只从画布边缘提取品红连通域作为 Alpha 蒙版，并把蒙版应用回原始像素。这样可避免直接把生成模型改写后的主体当成最终照片。
+
+当未配置 `STEPFUN_API_KEY`、模型超时或内容过滤时，前端会自动切换到现有 IMG.LY/ONNX 本地抠图；两条路径都失败时才使用中央裁切安全回退。启用 StepFun 路径意味着用户选择的照片会发送至阶跃星辰服务，产品上线前应在隐私说明中明确告知用户。
 
 默认开发地址通常为：
 

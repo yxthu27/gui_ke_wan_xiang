@@ -23,18 +23,19 @@ export const initialQijingDraft: QijingDraft = {
   days: "4 天",
   arrival: "贵阳北站",
   departure: "贵阳机场",
-  pace: "刚刚好",
-  travelModes: ["高铁 + 打车", "包车 / 拼车"],
+  pace: "",
+  travelModes: [],
   changeHotel: false,
   maxTransfer: 60,
-  interests: ["非遗手作", "地方小吃", "摄影", "村寨"],
-  boundaries: ["带长辈", "少走长台阶", "不赶早", "避开人挤人"],
+  interests: [],
+  boundaries: [],
   note: "",
 };
 
 type ProductContextValue = {
   draft: QijingDraft;
   plan?: QijingPlan;
+  unfoldProgress?: number;
   assistantReply?: string;
   busy?: boolean;
   error: string;
@@ -112,9 +113,9 @@ function ConvoQuestionShell({ step, name, question, helper, memory, children, co
     <TopBar title="与阿境聊聊" action="暂存" />
     <section className="convo-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="convo-speaking"><i></i><i></i><i></i><span>阿境正在问</span></div><div className="convo-subtitle"><small>阿境 · {name}</small><strong>{question}</strong><p>{helper}</p><div><button><Play />再说一遍</button><button>换个问法</button></div></div></section>
     <div className="convo-memory"><span>阿境已经记住</span><div>{memory.map((item, idx) => <b key={item} className={idx === 0 ? "locked" : ""}>{idx === 0 ? <Lock /> : null}{item}</b>)}</div></div>
-    <section className="convo-answer-panel"><div className="answer-lead"><span>可以点选，也可以直接告诉阿境</span><button>我自己说</button></div>{children}{product?.assistantReply ? <p className="convo-ai-reply" role="status"><Sparkles />{product.assistantReply}</p> : null}{product?.error ? <p className="convo-form-error" role="alert">{product.error}</p> : null}</section>
-    {complete ? <div className="convo-complete"><Sparkles /><div><strong>六问都聊清楚了</strong><span>阿境会先把记住的内容复述给你确认。</span></div><button>看看阿境记住了什么</button></div> : null}
-    <div className="convo-composer"><button aria-label="语音" disabled={product?.busy}><Mic /></button>{product ? <input aria-label="补充说明" value={product.draft.note} disabled={product.busy} onChange={event => product.update({ note: event.target.value })} placeholder={product.busy ? "阿境正在理解……" : "直接和阿境说你的想法……"} /> : <div>直接和阿境说你的想法……</div>}<button className="send" aria-label="发送" disabled={product?.busy}>{product?.busy ? <i className="ai-spinner" /> : <Send />}</button></div>
+    <section className="convo-answer-panel"><div className="answer-lead"><span>可以点选，也可以直接告诉阿境</span><button>我自己说</button></div>{children}{product?.assistantReply ? <p className="convo-ai-reply" role="status"><Sparkles />{product.assistantReply}</p> : null}{product?.error ? <p className="convo-form-error" role="alert">{product.error}</p> : null}{!complete ? <div className="convo-next-row"><button>继续下一问<ChevronRight /></button></div> : null}</section>
+    {complete ? <div className="convo-complete"><Sparkles /><div><strong>六问都聊清楚了</strong><span>确认后再生成行程，仍可返回修改。</span></div><button>完成六问，查看确认</button></div> : null}
+    <div className="convo-composer"><button aria-label="语音" disabled={product?.busy}><Mic /></button>{product ? <input aria-label="补充说明" value={product.draft.note} disabled={product.busy} onChange={event => product.update({ note: event.target.value })} placeholder={product.busy ? "阿境正在理解……" : "有补充时再输入……"} /> : <div>有补充时再输入……</div>}<button className="send" aria-label="发送补充" disabled={product?.busy || !product?.draft.note.trim()}>{product?.busy ? <i className="ai-spinner" /> : <Send />}</button></div>
   </div>;
 }
 
@@ -135,14 +136,10 @@ function WishScreen() {
 function TimeScreen() {
   const product = useProduct();
   const days = product?.draft.days ?? "4 天";
-  const cycle = (field: "arrival" | "departure", values: string[]) => {
-    if (!product) return;
-    const current = product.draft[field];
-    product.update({ [field]: values[(values.indexOf(current) + 1) % values.length] });
-  };
-  return <ConvoQuestionShell step={2} name="时间" question="四天左右对吗？你会从哪里来，又准备从哪里离开？" helper="我先把能走多远算准，才不会把贵州塞得太满。" memory={["黄果树瀑布", "非遗风物"]}>
+  const stations = ["贵阳北站", "贵阳机场", "贵阳站"];
+  return <ConvoQuestionShell step={2} name="时间" question="四天左右对吗？你会从哪里来，又准备从哪里离开？" helper="我先把能走多远算准，才不会把贵州塞得太满。" memory={product?.draft.wishes.length ? product.draft.wishes : ["第一次来贵州"]}>
     <div className="answer-duration"><div className="duration-summary"><span>预计停留</span><strong>{days.replace(" 天", "")} <small>{days === "半天" ? "" : "天"}</small></strong></div><div className="duration-options">{["半天", "1 天", "2–3 天", "4 天", "5–7 天"].map(x => <button key={x} className={days === x ? "active" : ""} aria-pressed={days === x} onClick={() => product?.update({ days: x })}>{x}</button>)}</div></div>
-    <div className="answer-locations"><button className="location-choice" onClick={() => cycle("arrival", ["贵阳北站", "贵阳机场", "贵阳站"])}><Train /><span><small>抵达 · 从这里开始</small><strong>{product?.draft.arrival ?? "贵阳北站"}</strong></span><em>修改</em></button><span className="location-connector" aria-hidden="true"><i></i><ChevronRight /></span><button className="location-choice" onClick={() => cycle("departure", ["贵阳机场", "贵阳北站", "贵阳站"])}><Plane /><span><small>离开 · 从这里结束</small><strong>{product?.draft.departure ?? "贵阳机场"}</strong></span><em>修改</em></button></div>
+    <div className="answer-locations"><label className="location-choice"><Train /><span><small>抵达 · 从这里开始</small><select aria-label="抵达地点" value={product?.draft.arrival ?? "贵阳北站"} onChange={event => product?.update({ arrival: event.target.value })}>{stations.map(station => <option key={station}>{station}</option>)}</select></span><em>选择</em></label><span className="location-connector" aria-hidden="true"><i></i><ChevronRight /></span><label className="location-choice"><Plane /><span><small>离开 · 从这里结束</small><select aria-label="离开地点" value={product?.draft.departure ?? "贵阳机场"} onChange={event => product?.update({ departure: event.target.value })}>{stations.map(station => <option key={station}>{station}</option>)}</select></span><em>选择</em></label></div>
     <div className="time-route-note"><Sparkles /><span><strong>阿境会按这段时间排路</strong>{product?.draft.arrival ?? "贵阳北站"}抵达，{product?.draft.departure ?? "贵阳机场"}离开，中间留足转场余量。</span></div>
   </ConvoQuestionShell>;
 }
@@ -150,9 +147,9 @@ function TimeScreen() {
 function PaceScreen() {
   const product = useProduct();
   const cards = [["缓", "慢慢来", "一天 1–2 处"], ["衡", "刚刚好", "一天 2–3 处"], ["盛", "尽兴一点", "一天 3–4 处"]];
-  return <ConvoQuestionShell step={3} name="步速" question="想慢慢走，还是想把喜欢的风景多装一些回去？" helper="我会用这个答案决定每天安排多少站、几点出发。" memory={["黄果树瀑布", "4 天 3 晚", "贵阳北站"]}>
+  return <ConvoQuestionShell step={3} name="步速" question="想慢慢走，还是想把喜欢的风景多装一些回去？" helper="我会用这个答案决定每天安排多少站、几点出发。" memory={[...(product?.draft.wishes.slice(0, 1) ?? []), product?.draft.days ?? "4 天", product?.draft.arrival ?? "贵阳北站"]}>
     <div className="answer-pace">{cards.map(([mark, title, note], idx) => { const selected = product ? product.draft.pace === title : idx === 1; return <button key={title} className={selected ? "selected" : ""} aria-pressed={selected} onClick={() => product?.update({ pace: title })}><i>{mark}</i><span><strong>{title}</strong><small>{note}</small></span>{selected ? <Check /> : null}</button>})}</div>
-    <div className="ajing-confirm"><Leaf /><span>听起来你想“{product?.draft.pace ?? "刚刚好"}”——重点不漏，也给街巷留一点空白。</span><button>就是这样</button></div>
+    <div className="ajing-confirm"><Leaf /><span>{product?.draft.pace ? `已选择“${product.draft.pace}”，我会据此控制每天的停留数量。` : "请选择一种舒服的节奏，之后仍可在微调中修改。"}</span></div>
   </ConvoQuestionShell>;
 }
 
@@ -162,7 +159,7 @@ function TravelScreen() {
   const icons = [<Train key="train" />, <Car key="car" />, <Bus key="bus" />, <Footprints key="walk" />];
   const selectedModes = product?.draft.travelModes ?? ["高铁 + 打车", "包车 / 拼车"];
   const toggleMode = (mode: string) => product?.update({ travelModes: selectedModes.includes(mode) ? selectedModes.filter(item => item !== mode) : [...selectedModes, mode] });
-  return <ConvoQuestionShell step={4} name="走法" question="贵州的路会绕一些。你更习惯怎么走，能接受中途换住处吗？" helper="如果条件冲突，我会在这里和你商量，不会擅自改。" memory={["黄果树瀑布", "4 天 3 晚", "刚刚好"]}>
+  return <ConvoQuestionShell step={4} name="走法" question="贵州的路会绕一些。你更习惯怎么走，能接受中途换住处吗？" helper="如果条件冲突，我会在这里和你商量，不会擅自改。" memory={[...(product?.draft.wishes.slice(0, 1) ?? []), product?.draft.days ?? "4 天", product?.draft.pace || "尚未选择步速"]}>
     <div className="answer-modes">{modes.map((mode, index) => <button key={mode} className={selectedModes.includes(mode) ? "selected" : ""} aria-pressed={selectedModes.includes(mode)} onClick={() => toggleMode(mode)}>{icons[index]}{mode}{selectedModes.includes(mode) ? <Check /> : null}</button>)}</div>
     <div className="answer-travel-settings">
       <div className="travel-setting-row">
@@ -189,7 +186,7 @@ function InterestScreen() {
     if (!product) return;
     product.update({ interests: selected.includes(tag) ? selected.filter(item => item !== tag) : selected.length < 5 ? [...selected, tag] : [...selected.slice(1), tag] });
   };
-  return <ConvoQuestionShell step={5} name="风物" question="除了必去的地方，看到什么会让你忍不住多停一会？" helper="可以多说几个，我最多替你记住五样。" memory={["黄果树瀑布", "刚刚好", "不换酒店"]}>
+  return <ConvoQuestionShell step={5} name="风物" question="除了必去的地方，看到什么会让你忍不住多停一会？" helper="可以多说几个，我最多替你记住五样。" memory={[...(product?.draft.wishes.slice(0, 1) ?? []), product?.draft.pace || "尚未选择步速", product?.draft.changeHotel ? "可以换住处" : "不换酒店"]}>
     <div className="answer-collected"><span>这一程已经收下</span><div>{selected.map(x => <button type="button" key={x} onClick={() => toggle(x)} aria-label={`移除${x}`}>{x}<X /></button>)}<em>{selected.length} / 5</em></div></div>
     <div className="answer-tags">{tags.map(x => <button key={x} className={selected.includes(x) ? "selected" : ""} aria-pressed={selected.includes(x)} onClick={() => toggle(x)}>{selected.includes(x) ? <Check /> : <span>＋</span>}{x}</button>)}</div>
   </ConvoQuestionShell>;
@@ -200,9 +197,9 @@ function BoundaryScreen() {
   const selected = product?.draft.boundaries ?? ["带长辈", "少走长台阶", "不赶早", "避开人挤人"];
   const toggle = (item: string) => product?.update({ boundaries: selected.includes(item) ? selected.filter(value => value !== item) : [...selected, item] });
   const option = (item: string) => <button className={selected.includes(item) ? "selected" : ""} aria-pressed={selected.includes(item)} onClick={() => toggle(item)}>{selected.includes(item) ? <Lock /> : null}{item}</button>;
-  return <ConvoQuestionShell step={6} name="边界" question="最后再确认：哪些事是我绝对不能替你决定的？" helper="比如饮食、同行人、早起和台阶。你说过的，我都会锁住。" memory={["黄果树瀑布", "4 天 3 晚", "非遗与村寨", "不换酒店"]} complete>
+  return <ConvoQuestionShell step={6} name="边界" question="最后再确认：哪些事是我绝对不能替你决定的？" helper="比如饮食、同行人、早起和台阶。你说过的，我都会锁住。" memory={[...(product?.draft.wishes.slice(0, 1) ?? []), product?.draft.days ?? "4 天", ...(product?.draft.interests.slice(0, 1) ?? []), product?.draft.changeHotel ? "可以换住处" : "不换酒店"]} complete>
     <div className="answer-boundaries"><section><span>同行与体力</span><div>{option("带长辈")}{option("带儿童")}{option("少走长台阶")}</div></section><section><span>体验与时间</span><div>{option("不赶早")}{option("避开人挤人")}{option("不走夜路")}</div></section></div>
-    <div className="boundary-echo"><ShieldCheck /><span>我记住了：{selected.length ? selected.join("、") : "等你告诉我真正不能妥协的事"}。</span><button>确认锁定</button></div>
+    <div className="boundary-echo"><ShieldCheck /><span>我记住了：{selected.length ? selected.join("、") : "等你告诉我真正不能妥协的事"}。</span></div>
   </ConvoQuestionShell>;
 }
 
@@ -213,37 +210,45 @@ function CrystalScreen() {
 }
 
 function UnfoldScreen() {
+  const product = useProduct();
+  const progress = Math.min(100, Math.max(0, product?.unfoldProgress ?? 68));
   const steps=["读懂你的心愿与边界","匹配贵州的山水与风物","计算更舒服的抵达顺序","避开拥挤与过长转场","写成属于你的行程手帖"];
-  return <div className="phone-page unfold-screen"><div className="unfold-bg"></div><button className="unfold-back"><ArrowLeft/></button><div className="unfold-heading"><span>GUIZHOU IS UNFOLDING</span><h1>万象<br/>推演中</h1><p>阿境正在把四天的贵州，折成一条更从容的线。</p></div><div className="progress-orbit"><span>68<small>%</small></span><i></i><i></i></div><div className="unfold-steps">{steps.map((step,idx)=><div key={step} className={idx<3?"done":idx===3?"current":""}><i>{idx<3?<Check/>:idx+1}</i><span>{step}</span>{idx===3?<em>正在推演</em>:null}</div>)}</div><div className="unfold-bottom"><button>返回检查</button><span>通常需要 15–30 秒，请不要关闭页面</span></div></div>;
+  const activeStep = Math.min(4, Math.floor(progress / 20));
+  return <div className="phone-page unfold-screen"><div className="unfold-bg"></div><button className="unfold-back"><ArrowLeft/></button><div className="unfold-heading"><span>GUIZHOU IS UNFOLDING</span><h1>万象<br/>推演中</h1><p>阿境正在把四天的贵州，折成一条更从容的线。</p></div><div className="progress-orbit" style={{ "--unfold-angle": `${progress * 3.6}deg` } as React.CSSProperties}><span>{Math.round(progress)}<small>%</small></span><i></i><i></i></div><div className="unfold-steps">{steps.map((step,idx)=>{const done=progress >= (idx+1)*20;const current=progress<100&&!done&&idx===activeStep;return <div key={step} className={done?"done":current?"current":""}><i>{done?<Check/>:idx+1}</i><span>{step}</span>{current?<em>正在推演</em>:null}</div>})}</div><div className="unfold-bottom"><button>返回检查</button><span>通常需要 15–30 秒，超时将自动生成基础方案</span></div></div>;
 }
 
 function ResultHeader({ active }: { active:"notes"|"map" }) {
   const product = useProduct();
   const draft = product?.draft ?? initialQijingDraft;
   const plan = product?.plan;
-  return <><TopBar title="我的这一程" action="编辑"/><section className="result-summary"><div className="result-status"><Sparkles/>AI 启境 <span>{plan?.generatedBy === "ai" ? "智能生成" : "安心方案"}</span></div><h1>{plan?.title ?? `${draft.days}黔行 · 山水与手艺之间`}</h1><p>{plan?.summary ?? `从${draft.arrival}出发，照顾你锁定的心愿，也为脚步留一点空白。`}</p><div>{(plan?.tags?.length ? plan.tags : [draft.days, draft.pace, draft.boundaries[0] ?? "自在同行"]).slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}</div></section><div className="guizhou-letter"><small>贵州的回信</small><p>“没有把每一处都塞进来，是想替你留住一段真正看得见山雾的上午。”</p><span>{draft.interests.slice(0, 3).join(" · ")}</span><i>万象</i></div><div className="view-toggle"><button className={active==="notes"?"active":""}><Landmark/>行程手帖</button><button className={active==="map"?"active":""}><MapIcon/>路线显影</button></div></>;
+  return <><TopBar title="我的这一程" action="编辑"/><section className="result-summary"><div className="result-status"><Sparkles/>{plan?.generatedBy === "ai" ? "AI 智能生成" : "本地安心方案"}</div><h1>{plan?.title ?? `${draft.days}黔行 · 山水与手艺之间`}</h1><p>{plan?.summary ?? `从${draft.arrival}出发，照顾你锁定的心愿，也为脚步留一点空白。`}</p><div>{(plan?.tags?.length ? plan.tags : [draft.days, draft.pace, draft.boundaries[0] ?? "自在同行"]).filter(Boolean).slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}</div></section><div className="guizhou-letter"><small>贵州的回信</small><p>“没有把每一处都塞进来，是想替你留住一段真正看得见山雾的上午。”</p><span>{draft.interests.slice(0, 3).join(" · ") || "山水有余白，行程有呼吸"}</span><i>万象</i></div><div className="view-toggle"><button className={active==="notes"?"active":""}><Landmark/>行程手帖</button><button className={active==="map"?"active":""}><MapIcon/>路线显影</button></div></>;
 }
 
 function ItineraryScreen() {
   const product = useProduct();
   const draft = product?.draft ?? initialQijingDraft;
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
   const fallbackItems = [
     { id:"arrival", time:"09:40", title:`${draft.arrival} · 抵达`, description:"从容接站，先到酒店放下行李", durationMinutes:40 },
     { id:"market", time:"11:30", title:"青云市集 · 午味", description:"从一碗酸汤开始认识贵州", durationMinutes:90 },
     { id:"museum", time:"14:20", title:"贵州省博物馆", description:"从山地文明读懂接下来的村寨", durationMinutes:120, lockedWish:true },
     { id:"river", time:"18:40", title:"甲秀楼 · 南明河", description:"避开白天人流，看灯影落进河里", durationMinutes:70 },
   ];
-  const day = product?.plan?.days[0];
+  const plannedDays = product?.plan?.days?.length ? product.plan.days : [{ day: 1, theme: "先从贵阳的烟火里落脚", items: fallbackItems }];
+  const day = plannedDays[Math.min(activeDayIndex, plannedDays.length - 1)];
   const items = day?.items?.length ? day.items : fallbackItems;
-  return <div className="phone-page result-screen itinerary-screen"><ResultHeader active="notes"/><section className="day-section"><div className="day-heading"><div><small>DAY 1 · AI ROUTE</small><h2>{day?.theme ?? "先从贵阳的烟火里落脚"}</h2></div><span>{draft.pace}</span></div><div className="timeline">{items.map((item,idx)=><article key={item.id}><time>{item.time}</time><i>{String(idx + 1).padStart(2,"0")}</i><div><h3>{item.title}</h3><p>{item.description}</p><span><Clock3/>{item.durationMinutes} min{item.lockedWish?<b><Lock/>心愿已锁定</b>:null}</span></div></article>)}</div></section>{product?.plan?.days[1] ? <button className="next-day"><span><small>DAY 2</small><strong>{product.plan.days[1].theme}</strong></span><ChevronRight/></button> : null}<div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
+  return <div className="phone-page result-screen itinerary-screen"><ResultHeader active="notes"/>{plannedDays.length > 1 ? <div className="day-picker" aria-label="选择查看日期">{plannedDays.map((item, index) => <button key={item.day} className={index === activeDayIndex ? "active" : ""} aria-pressed={index === activeDayIndex} onClick={() => setActiveDayIndex(index)}>第 {item.day} 天</button>)}</div> : null}<section className="day-section"><div className="day-heading"><div><small>DAY {day?.day ?? 1} · {product?.plan?.generatedBy === "ai" ? "AI ROUTE" : "安心方案"}</small><h2>{day?.theme ?? "先从贵阳的烟火里落脚"}</h2></div><span>{draft.pace || "待选择"}</span></div><div className="timeline">{items.map((item,idx)=><article key={item.id}><time>{item.time}</time><i>{String(idx + 1).padStart(2,"0")}</i><div><h3>{item.title}</h3><p>{item.description}</p><span><Clock3/>{item.durationMinutes} min{item.lockedWish?<b><Lock/>心愿已锁定</b>:null}</span></div></article>)}</div></section><div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
 }
 
 function MapScreen() {
   const product = useProduct();
   const draft = product?.draft ?? initialQijingDraft;
-  const locations = (product?.plan?.days[0]?.items.map(item => item.location).filter(Boolean) ?? [draft.arrival,"青云市集","省博物馆","甲秀楼"]).slice(0,4);
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const plannedDays = product?.plan?.days ?? [];
+  const activeDay = plannedDays[Math.min(activeDayIndex, Math.max(0, plannedDays.length - 1))];
+  const locations = (activeDay?.items.map(item => item.location).filter(Boolean) ?? [draft.arrival,"青云市集","省博物馆","甲秀楼"]).slice(0,4);
   while (locations.length < 4) locations.push(["青云市集","省博物馆","甲秀楼"][locations.length - 1] || "贵阳");
-  return <div className="phone-page result-screen map-screen"><ResultHeader active="map"/><div className="map-toolbar"><div><strong>DAY 1 · 贵阳</strong><span>{locations.length} 个地点 · AI 顺序</span></div><button><LocateFixed/>定位我</button></div><div className="map-canvas"><div className="map-route"></div><span className="marker m1">1</span><span className="marker m2">2</span><span className="marker m3">3</span><span className="marker m4">4</span><div className="map-place p1">{locations[0]}</div><div className="map-place p2">{locations[1]}</div><div className="map-place p3">{locations[2]}</div><div className="map-place p4">{locations[3]}</div><button className="map-control">＋<span></span>−</button><div className="map-scale">2 km</div></div><div className="route-sequence"><span>01</span><i></i><span>02</span><i></i><span>03</span><i></i><span>04</span><p>{locations.join(" → ")}</p></div><p className="map-privacy"><ShieldCheck/>定位仅在本页使用；拒绝定位也能完整查看行程路线。</p><div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
+  return <div className="phone-page result-screen map-screen"><ResultHeader active="map"/>{plannedDays.length > 1 ? <div className="day-picker" aria-label="选择查看日期">{plannedDays.map((item, index) => <button key={item.day} className={index === activeDayIndex ? "active" : ""} aria-pressed={index === activeDayIndex} onClick={() => setActiveDayIndex(index)}>第 {item.day} 天</button>)}</div> : null}<div className="map-toolbar"><div><strong>DAY {activeDay?.day ?? 1} · 贵州</strong><span>{locations.length} 个地点 · 推荐顺序</span></div><button><LocateFixed/>定位我</button></div><div className="map-canvas"><div className="map-route"></div><span className="marker m1">1</span><span className="marker m2">2</span><span className="marker m3">3</span><span className="marker m4">4</span><div className="map-place p1">{locations[0]}</div><div className="map-place p2">{locations[1]}</div><div className="map-place p3">{locations[2]}</div><div className="map-place p4">{locations[3]}</div><button className="map-control" aria-label="地图缩放">＋<span></span>−</button><div className="map-scale">2 km</div></div><div className="route-sequence"><span>01</span><i></i><span>02</span><i></i><span>03</span><i></i><span>04</span><p>{locations.join(" → ")}</p></div><p className="map-privacy"><ShieldCheck/>定位仅在本页使用；拒绝定位也能完整查看行程路线。</p><div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
 }
 
 function TuneScreen() {
@@ -255,10 +260,11 @@ function TuneScreen() {
 
 const screenComponents: Record<ScreenId, React.ComponentType> = { home:HomeScreen, talk:TalkScreen, invitation:InvitationScreen, wish:WishScreen, time:TimeScreen, pace:PaceScreen, travel:TravelScreen, interest:InterestScreen, boundary:BoundaryScreen, crystal:CrystalScreen, unfold:UnfoldScreen, itinerary:ItineraryScreen, map:MapScreen, tune:TuneScreen };
 
-export function QijingProductScreen({ screenId, draft, plan, assistantReply = "", busy = false, error = "", onDraftChange }: {
+export function QijingProductScreen({ screenId, draft, plan, unfoldProgress = 0, assistantReply = "", busy = false, error = "", onDraftChange }: {
   screenId: QijingScreenId;
   draft: QijingDraft;
   plan?: QijingPlan;
+  unfoldProgress?: number;
   assistantReply?: string;
   busy?: boolean;
   error?: string;
@@ -268,6 +274,7 @@ export function QijingProductScreen({ screenId, draft, plan, assistantReply = ""
   const value: ProductContextValue = {
     draft,
     plan,
+    unfoldProgress,
     assistantReply,
     busy,
     error,

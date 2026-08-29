@@ -511,6 +511,150 @@
   backdrop-filter: blur(10px);
 }
 
+/* User-flow fixes: focused steps use the full viewport and expose one obvious
+   way forward instead of relying on the composer send icon. */
+.merged-phone:has(.screen-invitation, .screen-wish, .screen-time, .screen-pace, .screen-travel, .screen-interest, .screen-boundary, .screen-crystal, .screen-unfold, .screen-tune) .merged-tabbar {
+  display: none;
+}
+
+.qijing-product-flow .convo-question-screen {
+  grid-template-rows: 48px clamp(236px, 36%, 286px) 54px minmax(0, 1fr);
+}
+.qijing-product-flow .convo-answer-panel {
+  padding-bottom: 88px;
+}
+.qijing-product-flow .convo-answer-panel button,
+.qijing-product-flow .convo-complete button {
+  min-height: 44px;
+}
+.qijing-product-flow .convo-subtitle button,
+.qijing-product-flow .mock-topbar button {
+  min-height: 44px;
+  min-width: 44px;
+  height: 44px;
+}
+.qijing-product-flow .convo-composer {
+  height: 72px;
+  padding: 9px 12px max(11px, env(safe-area-inset-bottom));
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+}
+.qijing-product-flow .convo-composer > button,
+.qijing-product-flow .convo-composer > input {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+}
+.qijing-product-flow .convo-composer > input {
+  width: 100%;
+  padding-inline: 14px;
+  font-size: 13px;
+}
+.qijing-product-flow .convo-composer .send:disabled {
+  background: #cbd2ce;
+  color: #75807b;
+  opacity: 1;
+  cursor: not-allowed;
+}
+.qijing-product-flow .convo-next-row {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin: 12px -2px 0;
+  padding: 8px 2px 2px;
+  background: linear-gradient(to bottom, transparent, rgba(247,244,235,.96) 34%);
+}
+.qijing-product-flow .convo-next-row button {
+  width: 100%;
+  border: 0;
+  border-radius: 13px;
+  background: var(--mountain);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(23,60,52,.16);
+}
+.qijing-product-flow .convo-next-row svg { width: 16px; height: 16px; }
+.qijing-product-flow .boundary-echo { grid-template-columns: 18px minmax(0, 1fr); }
+.qijing-product-flow .boundary-echo span { font-size: 11px; }
+.qijing-product-flow .convo-complete {
+  grid-template-columns: 20px minmax(0, 1fr);
+  bottom: 76px;
+  padding: 10px;
+}
+.qijing-product-flow .convo-complete button {
+  grid-column: 2;
+  width: 100%;
+  margin-top: 3px;
+  font-size: 11px;
+}
+.qijing-product-flow .convo-question-screen:has(.convo-complete) .convo-answer-panel {
+  padding-bottom: 170px;
+  scroll-padding-bottom: 170px;
+}
+
+.qijing-product-flow .screen-time .answer-locations > .location-choice {
+  min-width: 0;
+  height: 74px;
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: 7px;
+  align-items: center;
+  border: 1px solid rgba(23,60,52,.11);
+  border-radius: 15px;
+  background: rgba(248,245,237,.82);
+  box-shadow: 0 6px 18px rgba(23,60,52,.07);
+}
+.qijing-product-flow .screen-time .location-choice > svg { grid-row: 1 / 3; }
+.qijing-product-flow .screen-time .location-choice span { min-width: 0; display: grid; gap: 3px; }
+.qijing-product-flow .screen-time .location-choice select {
+  width: 100%;
+  min-height: 30px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #263832;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+.qijing-product-flow .screen-time .location-choice em {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.qijing-product-flow .day-picker {
+  margin: 0 16px 10px;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.qijing-product-flow .day-picker::-webkit-scrollbar { display: none; }
+.qijing-product-flow .day-picker button {
+  flex: 0 0 auto;
+  min-width: 68px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(23,60,52,.14);
+  border-radius: 99px;
+  background: rgba(248,245,237,.84);
+  color: #65716c;
+  font-size: 11px;
+  scroll-snap-align: start;
+}
+.qijing-product-flow .day-picker button.active {
+  border-color: var(--mountain);
+  background: var(--mountain);
+  color: #fff;
+}
+
 @media (max-width: 430px) {
   .merged-phone { width: 100vw; height: 100dvh; }
 }

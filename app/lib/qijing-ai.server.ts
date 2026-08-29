@@ -57,12 +57,12 @@ function logFallback(scope: "chat" | "plan", error: unknown) {
 }
 
 function providerConfig() {
-  const timeoutMs = Number(process.env.STEPFUN_TIMEOUT_MS || 65000);
+  const timeoutMs = Number(process.env.STEPFUN_TIMEOUT_MS || 20000);
   return {
     baseUrl: (process.env.STEPFUN_BASE_URL || "https://api.stepfun.com/step_plan/v1").replace(/\/$/, ""),
     apiKey: process.env.STEPFUN_API_KEY || "",
     model: process.env.STEPFUN_CHAT_MODEL || "step-3.7-flash",
-    timeoutMs: Number.isFinite(timeoutMs) ? Math.min(120000, Math.max(10000, timeoutMs)) : 65000,
+    timeoutMs: Number.isFinite(timeoutMs) ? Math.min(25000, Math.max(10000, timeoutMs)) : 20000,
   };
 }
 
@@ -177,17 +177,52 @@ export async function chatWithAjing(screenId: string, userText: string, draft: Q
 
 function fallbackPlan(draft: QijingDraft): QijingPlan {
   const firstWish = draft.wishes[0] || "贵州山水";
-  const items: QijingPlanItem[] = [
-    { id: "arrival", time: "09:40", title: `${draft.arrival} · 抵达`, description: "从容接站，先放下行李，让身体跟上旅程。", durationMinutes: 40, location: draft.arrival },
-    { id: "market", time: "11:30", title: "青云市集 · 午味", description: "从一碗酸汤开始认识贵州的城市烟火。", durationMinutes: 90, location: "青云市集" },
-    { id: "museum", time: "14:20", title: "贵州省博物馆", description: "从山地文明读懂接下来的村寨与手艺。", durationMinutes: 120, location: "贵州省博物馆", lockedWish: draft.wishes.includes("非遗风物") },
-    { id: "river", time: "18:40", title: "甲秀楼 · 南明河", description: "避开白天人流，看灯影落进南明河。", durationMinutes: 70, location: "甲秀楼", lockedWish: draft.wishes.includes("城市烟火") },
+  const values = draft.days.match(/\d+/g)?.map(Number) ?? [1];
+  const dayCount = draft.days === "半天" ? 1 : Math.min(7, Math.max(1, values.at(-1) ?? 1));
+  const templates: Array<{ theme: string; items: QijingPlanItem[] }> = [
+    { theme: "先从贵阳的烟火里落脚", items: [
+      { id: "d1-arrival", time: "09:40", title: `${draft.arrival} · 抵达`, description: "从容接站，先放下行李，让身体跟上旅程。", durationMinutes: 40, location: draft.arrival },
+      { id: "d1-market", time: "11:30", title: "青云市集 · 午味", description: "从一碗酸汤开始认识贵州的城市烟火。", durationMinutes: 90, location: "青云市集", lockedWish: draft.wishes.includes("贵州寻味") },
+      { id: "d1-museum", time: "14:20", title: "贵州省博物馆", description: "从山地文明读懂接下来的村寨与手艺。", durationMinutes: 120, location: "贵州省博物馆", lockedWish: draft.wishes.includes("非遗风物") },
+      { id: "d1-river", time: "18:40", title: "甲秀楼 · 南明河", description: "避开白天人流，看灯影落进南明河。", durationMinutes: 70, location: "甲秀楼", lockedWish: draft.wishes.includes("城市烟火") },
+    ] },
+    { theme: "把一整天留给山水大景", items: [
+      { id: "d2-falls", time: "09:30", title: "黄果树大瀑布", description: "错开首波人流，从较平缓的观景线慢慢靠近瀑布。", durationMinutes: 150, location: "黄果树瀑布", lockedWish: draft.wishes.includes("山水大景") },
+      { id: "d2-lunch", time: "12:30", title: "关岭风味午餐", description: "留足午休，不把下午排得太赶。", durationMinutes: 80, location: "关岭" },
+      { id: "d2-bridge", time: "15:00", title: "坝陵河远眺", description: "用轻松的观景停留替代连续爬坡。", durationMinutes: 70, location: "坝陵河" },
+    ] },
+    { theme: "在石巷与手艺之间慢下来", items: [
+      { id: "d3-town", time: "09:50", title: "青岩古镇背街", description: "从安静的背街进入，避开最拥挤的主入口。", durationMinutes: 120, location: "青岩古镇", lockedWish: draft.wishes.includes("城市烟火") },
+      { id: "d3-craft", time: "13:40", title: "非遗手作体验", description: "把一段完整下午留给蜡染、银饰或苗绣。", durationMinutes: 150, location: "青岩非遗工坊", lockedWish: draft.wishes.includes("非遗风物") },
+      { id: "d3-tea", time: "17:10", title: "城墙下喝茶", description: "在天色变柔之前休息片刻。", durationMinutes: 70, location: "青岩古镇" },
+    ] },
+    { theme: "带着余白从容返程", items: [
+      { id: "d4-morning", time: "09:30", title: "黔灵山脚散步", description: "不赶早，用轻松的一段城市山路收尾。", durationMinutes: 90, location: "黔灵山公园" },
+      { id: "d4-brunch", time: "11:30", title: "贵阳最后一味", description: "按你的口味补上一顿没有打卡压力的午餐。", durationMinutes: 80, location: "贵阳" },
+      { id: "d4-departure", time: "14:30", title: `${draft.departure} · 离开`, description: "预留充足交通与安检时间，从容结束这一程。", durationMinutes: 60, location: draft.departure },
+    ] },
+    { theme: "把村寨的清晨留给自己", items: [
+      { id: "d5-village", time: "09:00", title: "村寨晨雾", description: "在人流到来前看吊脚楼与山雾慢慢显影。", durationMinutes: 150, location: "黔东南村寨", lockedWish: draft.wishes.includes("村寨慢游") },
+      { id: "d5-lunch", time: "12:20", title: "寨中家常午餐", description: "就近吃饭，减少来回转场。", durationMinutes: 90, location: "黔东南村寨" },
+      { id: "d5-walk", time: "15:00", title: "田埂慢行", description: "选择平缓路线，给拍照与停留留足时间。", durationMinutes: 100, location: "黔东南村寨" },
+    ] },
+    { theme: "去野，但不把脚步催得太急", items: [
+      { id: "d6-trail", time: "09:30", title: "轻量山野步道", description: "依据体力边界选择短线，天气不合适时改为室内方案。", durationMinutes: 140, location: "贵阳近郊", lockedWish: draft.wishes.includes("去野一下") },
+      { id: "d6-picnic", time: "12:40", title: "山边午餐", description: "避开热门时段，给下午保留恢复时间。", durationMinutes: 90, location: "贵阳近郊" },
+      { id: "d6-sunset", time: "17:00", title: "看一次山地日落", description: "天黑前返回，不安排夜路。", durationMinutes: 80, location: "贵阳近郊" },
+    ] },
+    { theme: "最后一天只做真正喜欢的事", items: [
+      { id: "d7-free", time: "10:00", title: "自由回访时间", description: "回到最喜欢的一处，或睡到自然醒再出发。", durationMinutes: 120, location: "贵阳" },
+      { id: "d7-gift", time: "13:30", title: "挑一份贵州手信", description: "选择交通方便的店，不额外绕远路。", durationMinutes: 80, location: "贵阳" },
+      { id: "d7-departure", time: "16:00", title: `${draft.departure} · 离开`, description: "预留充足交通时间，安心结束旅程。", durationMinutes: 60, location: draft.departure },
+    ] },
   ];
+  const days = templates.slice(0, dayCount).map((template, index) => ({ day: index + 1, ...template }));
   return {
     title: `${draft.days}黔行 · ${firstWish}之间`,
-    summary: `从${draft.arrival}出发，按“${draft.pace}”的节奏照顾已锁定心愿。`,
-    tags: [draft.days, draft.pace, draft.boundaries[0] || "自在同行"],
-    days: [{ day: 1, theme: "先从贵阳的烟火里落脚", items }],
+    summary: `从${draft.arrival}出发，按“${draft.pace || "舒适"}”的节奏照顾已锁定心愿。`,
+    tags: [draft.days, draft.pace || "舒适节奏", draft.boundaries[0] || "自在同行"],
+    days,
     warnings: [],
     generatedBy: "fallback",
   };

@@ -1005,7 +1005,9 @@
     });
     runtime.cutoutPromise = makeCutoutResult(source, "visual-core", progress => {
       if (runtime.activeModal !== "camera") return;
-      const label = progress.percent === null ? "正在载入本地抠图模型" : `本地模型载入 ${progress.percent}%`;
+      const label = progress.engine === "stepfun"
+        ? (progress.key === "stepfun-mask" ? "AI 幕布完成 · 正在提取原图轮廓" : "StepFun 正在分离主体与背景")
+        : (progress.percent === null ? "正在载入本地抠图模型" : `本地模型载入 ${progress.percent}%`);
       runtime.app.querySelector("[data-scan-status]").textContent = label;
     });
     const [subjects, cutout] = await Promise.all([subjectPromise, runtime.cutoutPromise, delay(1500)]);
@@ -1013,11 +1015,11 @@
     runtime.capturedCutoutOverlay = cutout.overlay;
     runtime.cutoutMode = cutout.mode;
     if (runtime.activeModal !== "camera") return;
-    runtime.app.querySelector("[data-scan-status]").textContent = cutout.mode === "local-ai" ? "核心主体已自动分离" : "扫描完成 · 请核对主体";
+    runtime.app.querySelector("[data-scan-status]").textContent = cutout.mode !== "fallback" ? "核心主体已自动分离" : "扫描完成 · 请核对主体";
     runtime.detectedSubjects = (subjects || []).map((subject, index) => typeof subject === "string"
       ? { id: subject, label: SUBJECT_COPY[subject]?.label || subject, confidence: .76, type: "photo", description: SUBJECT_COPY[subject]?.desc || "可点选生成贴画。" }
       : Object.assign({ id: `detected-${index}`, label: `识别主体 ${index + 1}`, confidence: .72, type: "photo", description: "可点选生成贴画。" }, subject));
-    runtime.app.querySelector("[data-analysis-mode]").textContent = cutout.mode === "local-ai" ? "本地 AI 抠图完成" : ((subjects || []).some(subject => subject && subject.source === "stepfun-vision") ? "AI 识别完成" : "本地视觉识别");
+    runtime.app.querySelector("[data-analysis-mode]").textContent = cutout.mode === "stepfun-ai" ? "StepFun 增强抠图完成" : (cutout.mode === "local-ai" ? "本地 AI 抠图完成" : ((subjects || []).some(subject => subject && subject.source === "stepfun-vision") ? "AI 识别完成" : "本地视觉识别"));
     runtime.selectedSubject = null;
     const options = runtime.app.querySelector("[data-subject-options]");
     options.innerHTML = runtime.detectedSubjects.map(subject => `<button type="button" data-subject="${escapeHtml(subject.id)}" aria-pressed="false"><span><b>${escapeHtml(subject.label)}</b><small>${Math.round(Number(subject.confidence || 0) * 100)}% 匹配</small></span><em>✓</em><i>${escapeHtml(subject.description)}</i></button>`).join("");
@@ -1045,7 +1047,7 @@
     photo.querySelector(".gx-personal-subject-blobs")?.remove();
     const wrap = document.createElement("span");
     wrap.className = "gx-personal-subject-blobs";
-    if (runtime.capturedCutoutOverlay && runtime.cutoutMode === "local-ai" && runtime.detectedSubjects[0]) {
+    if (runtime.capturedCutoutOverlay && runtime.cutoutMode !== "fallback" && runtime.detectedSubjects[0]) {
       const subject = runtime.detectedSubjects[0];
       wrap.classList.add("gx-personal-has-smart-cutout");
       wrap.innerHTML = `<button type="button" class="gx-personal-smart-cutout" data-subject="${escapeHtml(subject.id)}" aria-pressed="false" aria-label="锁定核心主体：${escapeHtml(subject.label)}">
@@ -1126,7 +1128,7 @@
     runtime.capturedCutoutOverlay = cutout.overlay;
     runtime.cutoutMode = cutout.mode;
     const cutoutStatus = runtime.app.querySelector("[data-cutout-status]");
-    if (cutoutStatus) cutoutStatus.textContent = cutout.mode === "local-ai" ? "主体轮廓已分离，正在压上手帐纸边。" : "本地模型暂不可用，已保留照片并使用安全回退。";
+    if (cutoutStatus) cutoutStatus.textContent = cutout.mode !== "fallback" ? "主体轮廓已分离，正在压上手帐纸边。" : "抠图模型暂不可用，已保留照片并使用安全回退。";
     const [art, description] = await Promise.all([
       AIAdapter.generateSticker(runtime.capturedImage, runtime.selectedSubject),
       AIAdapter.describeImage(runtime.selectedSubject)
@@ -1245,7 +1247,8 @@
     try {
       if (!window.GuikeBackgroundRemoval?.removeBackground) throw new Error("本地抠图适配器未加载");
       const overlay = await window.GuikeBackgroundRemoval.removeBackground(source, { onProgress });
-      return { image: await normalizeTransparentCutout(overlay), overlay, mode: "local-ai" };
+      const engine = window.GuikeBackgroundRemoval.lastEngine || "";
+      return { image: await normalizeTransparentCutout(overlay), overlay, mode: engine.startsWith("stepfun") ? "stepfun-ai" : "local-ai", engine };
     } catch (error) {
       console.warn("[Guike] 本地 AI 抠图失败，使用中央裁切回退：", error);
       const fallback = await makeLegacyCutout(source, seed);

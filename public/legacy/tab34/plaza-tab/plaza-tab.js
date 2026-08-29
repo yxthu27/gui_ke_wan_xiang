@@ -304,6 +304,10 @@
     </button>`;
   }
 
+  function stopCount(item) {
+    return Array.isArray(item.stops) ? item.stops.length : Number(item.stops) || 0;
+  }
+
   function featuredHTML(item) {
     return `<article class="gzp-feat" data-card="${item.id}" data-img="${item.img}">
       <div class="gzp-feat-media">
@@ -317,7 +321,7 @@
         <p class="gzp-feat-place">${item.place}</p>
         <p class="gzp-feat-stats">
           <span>${item.dist.toFixed(1)} KM</span><i></i>
-          <span>${item.stops} 站</span><i></i>
+          <span>${stopCount(item)} 站</span><i></i>
           <span>${item.time}</span>
         </p>
         <div class="gzp-tags">${item.tags.slice(0, 3).map(t => `<span class="gzp-tag">${t}</span>`).join("")}</div>
@@ -403,13 +407,13 @@
         </div>
         <h2 class="gzp-detail-line">${item.line}</h2>
         <p class="gzp-detail-stats">
-          <span>${item.dist.toFixed(1)} KM</span><i></i><span>${item.stops} 站</span><i></i><span>${item.time}</span>
+          <span>${item.dist.toFixed(1)} KM</span><i></i><span>${stopCount(item)} 站</span><i></i><span>${item.time}</span>
         </p>
         <ol class="gzp-timeline">
           ${item.stops.map((s, i) => stopHTML(s, i === item.stops.length - 1)).join("")}
         </ol>
         <button class="gzp-map-toggle" type="button" data-action="open-map">
-          <span>展开地图</span><small>OPEN MAP · ${item.stops} NODES</small>
+          <span>展开地图</span><small>OPEN MAP · ${stopCount(item)} NODES</small>
         </button>
         <p class="gzp-detail-footnote">收藏这一程，明天沿着它走。</p>
       </div>
@@ -456,7 +460,7 @@
         <div class="gzp-map-canvas">
           ${bigMapSvg(item)}
         </div>
-        <p class="gzp-map-caption"><span>${item.dist.toFixed(1)} KM · ${item.stops} 站 · ${item.time}</span><span>ABSTRACT ROUTE</span></p>
+        <p class="gzp-map-caption"><span>${item.dist.toFixed(1)} KM · ${stopCount(item)} 站 · ${item.time}</span><span>ABSTRACT ROUTE</span></p>
       </section>
     </div>`;
   }

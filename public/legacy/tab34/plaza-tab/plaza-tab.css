@@ -165,6 +165,7 @@
   border-radius: 999px;
   cursor: pointer;
   transition: background 200ms ease, color 200ms ease;
+  min-height: 44px;
 }
 .gzp-seg button.is-active {
   background: var(--gzp-paper);
@@ -195,6 +196,7 @@
   border-radius: 3px;
   cursor: pointer;
   transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+  min-height: 44px;
 }
 .gzp-chip.is-active {
   background: var(--gzp-paper);
@@ -236,7 +238,7 @@
 
 .gzp-feat-media {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 3;
   border-radius: calc(var(--gzp-radius) - 1px) calc(var(--gzp-radius) - 1px) 0 0;
   overflow: hidden;
   background: var(--gzp-green-deep);
@@ -610,8 +612,8 @@
 
 .gzp-hero {
   position: relative;
-  height: 52vh;
-  min-height: 300px;
+  height: 42vh;
+  min-height: 240px;
   overflow: hidden;
   background: var(--gzp-green-deep);
 }
