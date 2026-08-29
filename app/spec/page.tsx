@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 type ScreenId = "home" | "talk" | "invitation" | "wish" | "time" | "pace" |
   "travel" | "interest" | "boundary" | "crystal" | "unfold" | "itinerary" | "map" | "tune";
 
+export type QijingScreenId = ScreenId;
+
 type ScreenMeta = {
   id: ScreenId; phase: string; title: string; index: string; goal: string; states: string[]; dev: string;
 };
@@ -161,6 +163,11 @@ function TuneScreen() {
 }
 
 const screenComponents: Record<ScreenId, React.ComponentType> = { home:HomeScreen, talk:TalkScreen, invitation:InvitationScreen, wish:WishScreen, time:TimeScreen, pace:PaceScreen, travel:TravelScreen, interest:InterestScreen, boundary:BoundaryScreen, crystal:CrystalScreen, unfold:UnfoldScreen, itinerary:ItineraryScreen, map:MapScreen, tune:TuneScreen };
+
+export function QijingProductScreen({ screenId }: { screenId: QijingScreenId }) {
+  const Screen = screenComponents[screenId];
+  return <div className={`phone-viewport screen-${screenId}`}><Screen /></div>;
+}
 
 function PhoneFrame({ screenId, miniature=false }: { screenId:ScreenId; miniature?:boolean }) {
   const Screen=screenComponents[screenId];

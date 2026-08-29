@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import {
-  ArrowLeft, Compass, Grid2X2, Map as MapIcon, Mic, Play, Send, UserRound,
+  Compass, Grid2X2, Map as MapIcon, UserRound,
 } from "lucide-react";
+import { QijingProductScreen, type QijingScreenId } from "./spec/page";
 
 type MainTab = "qijing" | "stroll" | "personal" | "plaza";
 type Tab34Pane = "个人" | "广场";
@@ -13,14 +14,43 @@ const tabFromLegacy: Record<string, MainTab> = {
 };
 
 function TabOne() {
-  return <div className="phone-page talk-screen merged-talk-screen">
-      <div className="mock-topbar"><button aria-label="返回" className="icon-button" onClick={() => window.history.back()}><ArrowLeft /></button><strong>与阿境聊聊</strong><button className="text-action">重新开始</button></div>
-      <div className="dialog-stage-label"><span />自由表达 · 阿境正在理解</div>
-      <section className="talk-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="speaking-indicator"><i /><i /><i /><span>阿境正在说</span></div><div className="subtitle-card"><small>阿境 · 开场</small><strong>我听见了：瀑布、村寨，还有街边小店。我们再聊六件事，就能把这一程慢慢拼出来。</strong><div><button><Play />再说一遍</button><button>我想补充</button></div></div></section>
-      <div className="recognized-row"><button>瀑布</button><button>村寨</button><button className="locked">街边小店</button></div>
-      <div className="reply-area"><p>不用填问卷，阿境会一次只问一件事</p><div><button>我还想补充</button><a className="selected" href="/spec">查看完整六问流程</a></div></div>
-      <div className="chat-composer"><button aria-label="语音"><Mic /></button><div>直接和阿境说你的想法……</div><button className="send" aria-label="发送"><Send /></button></div>
-    </div>;
+  const flow: QijingScreenId[] = ["talk", "invitation", "wish", "time", "pace", "travel", "interest", "boundary", "crystal", "unfold", "itinerary", "map", "tune"];
+  const [screenId, setScreenId] = useState<QijingScreenId>("talk");
+
+  const move = useCallback((offset: number) => {
+    setScreenId(current => flow[Math.max(0, Math.min(flow.length - 1, flow.indexOf(current) + offset))]);
+  }, []);
+
+  useEffect(() => {
+    if (screenId !== "unfold") return;
+    const timer = window.setTimeout(() => setScreenId("itinerary"), 2200);
+    return () => window.clearTimeout(timer);
+  }, [screenId]);
+
+  const handleFlowClick = (event: MouseEvent<HTMLDivElement>) => {
+    const button = (event.target as HTMLElement).closest("button");
+    if (!button) return;
+    const label = `${button.getAttribute("aria-label") ?? ""} ${button.textContent ?? ""}`.trim();
+
+    if (label.includes("重新开始") || label.includes("退出")) return setScreenId("talk");
+    if (button.matches(".icon-button,.unfold-back") || label === "关闭" || label.includes("取消")) return screenId === "talk" ? window.history.back() : move(-1);
+    if (screenId === "invitation" && button.parentElement?.tagName === "HEADER" && !label.includes("跳过")) return move(-1);
+    if (screenId === "talk" && label.includes("开始聊六问")) return setScreenId("invitation");
+    if (screenId === "invitation" && (label.includes("跳过") || label.includes("收下这张帖"))) return setScreenId("wish");
+    if (["wish", "time", "pace", "travel", "interest"].includes(screenId) && label.includes("发送")) return move(1);
+    if (screenId === "boundary" && (label.includes("看看阿境记住了什么") || label.includes("发送"))) return setScreenId("crystal");
+    if (screenId === "crystal" && label.includes("修改")) return setScreenId("boundary");
+    if (screenId === "crystal" && label.includes("为我开境")) return setScreenId("unfold");
+    if (screenId === "unfold" && label.includes("返回检查")) return setScreenId("crystal");
+    if (label.includes("行程手帖")) return setScreenId("itinerary");
+    if (label.includes("路线显影")) return setScreenId("map");
+    if (label.includes("微调") || (label.includes("编辑") && ["itinerary", "map"].includes(screenId))) return setScreenId("tune");
+    if (screenId === "tune" && label.includes("重新开境")) return setScreenId("unfold");
+  };
+
+  return <div className="qijing-product-flow" onClick={handleFlowClick}>
+    <QijingProductScreen screenId={screenId} />
+  </div>;
 }
 
 function LegacyFrame({ src, title, pane, allow, onSwitch }: { src: string; title: string; pane?: Tab34Pane; allow?: string; onSwitch: (tab: MainTab) => void }) {

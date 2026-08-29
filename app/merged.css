@@ -55,22 +55,9 @@
 .merged-tabbar button.is-active { color: var(--mountain); font-weight: 800; }
 .merged-tabbar button.is-active svg { color: var(--cinnabar); filter: drop-shadow(0 3px 5px rgba(182, 74, 58, .18)); }
 
-.merged-home-screen,
-.merged-talk-screen { padding-top: 0; }
-.merged-home-screen { padding-bottom: 14px; }
-.merged-talk-screen { overflow-y: auto; scrollbar-width: none; }
-.merged-talk-screen .reply-area a.selected {
-  min-height: 31px;
-  padding: 0 12px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--mountain);
-  color: #fff;
-  text-decoration: none;
-  font-size: 8px;
-}
+.qijing-product-flow { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.qijing-product-flow > .phone-viewport { width: 100%; height: 100%; border-radius: 0; }
+.qijing-product-flow .phone-page { padding-top: 0; }
 
 @media (max-width: 430px) {
   .merged-phone { width: 100vw; height: 100dvh; }
