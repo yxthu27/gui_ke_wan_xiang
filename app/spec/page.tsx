@@ -9,26 +9,13 @@ import {
   SlidersHorizontal, Sparkles, Train, UserRound, Utensils, X,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { QijingDraft, QijingPlan } from "../lib/qijing-ai-types";
+export type { QijingDraft, QijingPlan } from "../lib/qijing-ai-types";
 
 type ScreenId = "home" | "talk" | "invitation" | "wish" | "time" | "pace" |
   "travel" | "interest" | "boundary" | "crystal" | "unfold" | "itinerary" | "map" | "tune";
 
 export type QijingScreenId = ScreenId;
-
-export type QijingDraft = {
-  wishes: string[];
-  wishesTouched: boolean;
-  days: string;
-  arrival: string;
-  departure: string;
-  pace: string;
-  travelModes: string[];
-  changeHotel: boolean;
-  maxTransfer: number;
-  interests: string[];
-  boundaries: string[];
-  note: string;
-};
 
 export const initialQijingDraft: QijingDraft = {
   wishes: [],
@@ -47,6 +34,9 @@ export const initialQijingDraft: QijingDraft = {
 
 type ProductContextValue = {
   draft: QijingDraft;
+  plan?: QijingPlan;
+  assistantReply?: string;
+  busy?: boolean;
   error: string;
   update: (patch: Partial<QijingDraft>) => void;
 };
@@ -102,7 +92,7 @@ function HomeScreen() {
 }
 
 function TalkScreen() {
-  return <div className="phone-page talk-screen"><section className="talk-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="speaking-indicator"><i></i><i></i><i></i><span>阿境正在说</span></div><div className="subtitle-card"><small>阿境 · 开场</small><strong>我听见了：瀑布、村寨，还有街边小店。我们再聊六件事，就能把这一程慢慢拼出来。</strong><div><button><Play />再说一遍</button><button>我想补充</button></div></div></section><div className="recognized-row"><button><Mountain />瀑布</button><button><Home />村寨</button><button className="locked"><Utensils />街边小店</button></div><div className="reply-area"><p>不用填问卷，阿境会一次只问一件事</p><div><button>我还想补充</button><button className="selected">开始聊六问</button><button>先随便聊聊</button></div></div><div className="chat-composer"><button aria-label="语音"><Mic /></button><div>直接和阿境说你的想法……</div><button className="send" aria-label="发送"><Send /></button></div></div>;
+  return <div className="phone-page talk-screen"><section className="talk-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="speaking-indicator"><i></i><i></i><i></i><span>阿境正在说</span></div><div className="subtitle-card"><small>阿境 · 开场</small><strong>我听见了：瀑布、村寨，还有街边小店。我们再聊六件事，就能把这一程慢慢拼出来。</strong><div><button><Play />再说一遍</button></div></div></section><div className="reply-area"><p>阿境会一次只问一件事，你随时可以在下方补充</p><div><button className="selected">开始聊六问</button></div></div><div className="chat-composer"><button aria-label="语音"><Mic /></button><div>直接和阿境说你的想法……</div><button className="send" aria-label="发送"><Send /></button></div></div>;
 }
 
 function InvitationScreen() {
@@ -122,9 +112,9 @@ function ConvoQuestionShell({ step, name, question, helper, memory, children, co
     <TopBar title="与阿境聊聊" action="暂存" />
     <section className="convo-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="convo-speaking"><i></i><i></i><i></i><span>阿境正在问</span></div><div className="convo-subtitle"><small>阿境 · {name}</small><strong>{question}</strong><p>{helper}</p><div><button><Play />再说一遍</button><button>换个问法</button></div></div></section>
     <div className="convo-memory"><span>阿境已经记住</span><div>{memory.map((item, idx) => <b key={item} className={idx === 0 ? "locked" : ""}>{idx === 0 ? <Lock /> : null}{item}</b>)}</div></div>
-    <section className="convo-answer-panel"><div className="answer-lead"><span>可以点选，也可以直接告诉阿境</span><button>我自己说</button></div>{children}{product?.error ? <p className="convo-form-error" role="alert">{product.error}</p> : null}</section>
+    <section className="convo-answer-panel"><div className="answer-lead"><span>可以点选，也可以直接告诉阿境</span><button>我自己说</button></div>{children}{product?.assistantReply ? <p className="convo-ai-reply" role="status"><Sparkles />{product.assistantReply}</p> : null}{product?.error ? <p className="convo-form-error" role="alert">{product.error}</p> : null}</section>
     {complete ? <div className="convo-complete"><Sparkles /><div><strong>六问都聊清楚了</strong><span>阿境会先把记住的内容复述给你确认。</span></div><button>看看阿境记住了什么</button></div> : null}
-    <div className="convo-composer"><button aria-label="语音"><Mic /></button>{product ? <input aria-label="补充说明" value={product.draft.note} onChange={event => product.update({ note: event.target.value })} placeholder="直接和阿境说你的想法……" /> : <div>直接和阿境说你的想法……</div>}<button className="send" aria-label="发送"><Send /></button></div>
+    <div className="convo-composer"><button aria-label="语音" disabled={product?.busy}><Mic /></button>{product ? <input aria-label="补充说明" value={product.draft.note} disabled={product.busy} onChange={event => product.update({ note: event.target.value })} placeholder={product.busy ? "阿境正在理解……" : "直接和阿境说你的想法……"} /> : <div>直接和阿境说你的想法……</div>}<button className="send" aria-label="发送" disabled={product?.busy}>{product?.busy ? <i className="ai-spinner" /> : <Send />}</button></div>
   </div>;
 }
 
@@ -151,8 +141,9 @@ function TimeScreen() {
     product.update({ [field]: values[(values.indexOf(current) + 1) % values.length] });
   };
   return <ConvoQuestionShell step={2} name="时间" question="四天左右对吗？你会从哪里来，又准备从哪里离开？" helper="我先把能走多远算准，才不会把贵州塞得太满。" memory={["黄果树瀑布", "非遗风物"]}>
-    <div className="answer-duration"><div><span>预计停留</span><strong>{days.replace(" 天", "")} <small>{days === "半天" ? "" : "天"}</small></strong></div><div>{["半天", "1 天", "2–3 天", "4 天", "5–7 天"].map(x => <button key={x} className={days === x ? "active" : ""} aria-pressed={days === x} onClick={() => product?.update({ days: x })}>{x}</button>)}</div></div>
-    <div className="answer-locations"><button onClick={() => cycle("arrival", ["贵阳北站", "贵阳机场", "贵阳站"])}><Train /><span><small>从这里开始</small><strong>{product?.draft.arrival ?? "贵阳北站"}</strong></span><em>修改</em></button><button onClick={() => cycle("departure", ["贵阳机场", "贵阳北站", "贵阳站"])}><Plane /><span><small>从这里离开</small><strong>{product?.draft.departure ?? "贵阳机场"}</strong></span><em>修改</em></button></div>
+    <div className="answer-duration"><div className="duration-summary"><span>预计停留</span><strong>{days.replace(" 天", "")} <small>{days === "半天" ? "" : "天"}</small></strong></div><div className="duration-options">{["半天", "1 天", "2–3 天", "4 天", "5–7 天"].map(x => <button key={x} className={days === x ? "active" : ""} aria-pressed={days === x} onClick={() => product?.update({ days: x })}>{x}</button>)}</div></div>
+    <div className="answer-locations"><button className="location-choice" onClick={() => cycle("arrival", ["贵阳北站", "贵阳机场", "贵阳站"])}><Train /><span><small>抵达 · 从这里开始</small><strong>{product?.draft.arrival ?? "贵阳北站"}</strong></span><em>修改</em></button><span className="location-connector" aria-hidden="true"><i></i><ChevronRight /></span><button className="location-choice" onClick={() => cycle("departure", ["贵阳机场", "贵阳北站", "贵阳站"])}><Plane /><span><small>离开 · 从这里结束</small><strong>{product?.draft.departure ?? "贵阳机场"}</strong></span><em>修改</em></button></div>
+    <div className="time-route-note"><Sparkles /><span><strong>阿境会按这段时间排路</strong>{product?.draft.arrival ?? "贵阳北站"}抵达，{product?.draft.departure ?? "贵阳机场"}离开，中间留足转场余量。</span></div>
   </ConvoQuestionShell>;
 }
 
@@ -227,19 +218,32 @@ function UnfoldScreen() {
 }
 
 function ResultHeader({ active }: { active:"notes"|"map" }) {
-  const draft = useProduct()?.draft ?? initialQijingDraft;
-  return <><TopBar title="我的这一程" action="编辑"/><section className="result-summary"><div className="result-status"><Sparkles/>AI 启境 <span>刚刚生成</span></div><h1>{draft.days}黔行 · 山水与手艺之间</h1><p>从{draft.arrival}出发，照顾你锁定的心愿，也为脚步留一点空白。</p><div><span>{draft.days}</span><span>{draft.pace}</span><span>{draft.boundaries[0] ?? "自在同行"}</span></div></section><div className="guizhou-letter"><small>贵州的回信</small><p>“没有把每一处都塞进来，是想替你留住一段真正看得见山雾的上午。”</p><span>{draft.interests.slice(0, 3).join(" · ")}</span><i>万象</i></div><div className="view-toggle"><button className={active==="notes"?"active":""}><Landmark/>行程手帖</button><button className={active==="map"?"active":""}><MapIcon/>路线显影</button></div></>;
+  const product = useProduct();
+  const draft = product?.draft ?? initialQijingDraft;
+  const plan = product?.plan;
+  return <><TopBar title="我的这一程" action="编辑"/><section className="result-summary"><div className="result-status"><Sparkles/>AI 启境 <span>{plan?.generatedBy === "ai" ? "智能生成" : "安心方案"}</span></div><h1>{plan?.title ?? `${draft.days}黔行 · 山水与手艺之间`}</h1><p>{plan?.summary ?? `从${draft.arrival}出发，照顾你锁定的心愿，也为脚步留一点空白。`}</p><div>{(plan?.tags?.length ? plan.tags : [draft.days, draft.pace, draft.boundaries[0] ?? "自在同行"]).slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}</div></section><div className="guizhou-letter"><small>贵州的回信</small><p>“没有把每一处都塞进来，是想替你留住一段真正看得见山雾的上午。”</p><span>{draft.interests.slice(0, 3).join(" · ")}</span><i>万象</i></div><div className="view-toggle"><button className={active==="notes"?"active":""}><Landmark/>行程手帖</button><button className={active==="map"?"active":""}><MapIcon/>路线显影</button></div></>;
 }
 
 function ItineraryScreen() {
-  const draft = useProduct()?.draft ?? initialQijingDraft;
-  const items=[["09:40","01",`${draft.arrival} · 抵达`,"从容接站，先到酒店放下行李","40 min"],["11:30","02","青云市集 · 午味","从一碗酸汤开始认识贵州","90 min"],["14:20","03","贵州省博物馆","从山地文明读懂接下来的村寨","120 min"],["18:40","04","甲秀楼 · 南明河","避开白天人流，看灯影落进河里","70 min"]];
-  return <div className="phone-page result-screen itinerary-screen"><ResultHeader active="notes"/><section className="day-section"><div className="day-heading"><div><small>DAY 1 · 09/18</small><h2>先从贵阳的烟火里落脚</h2></div><span>松弛抵达</span></div><div className="timeline">{items.map(([time,no,title,desc,duration],idx)=><article key={no}><time>{time}</time><i>{no}</i><div><h3>{title}</h3><p>{desc}</p><span><Clock3/>{duration}{idx===2?<b><Lock/>心愿已锁定</b>:null}</span></div></article>)}</div></section><button className="next-day"><span><small>DAY 2</small><strong>黄果树 · 把一天交给水声</strong></span><ChevronRight/></button><div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
+  const product = useProduct();
+  const draft = product?.draft ?? initialQijingDraft;
+  const fallbackItems = [
+    { id:"arrival", time:"09:40", title:`${draft.arrival} · 抵达`, description:"从容接站，先到酒店放下行李", durationMinutes:40 },
+    { id:"market", time:"11:30", title:"青云市集 · 午味", description:"从一碗酸汤开始认识贵州", durationMinutes:90 },
+    { id:"museum", time:"14:20", title:"贵州省博物馆", description:"从山地文明读懂接下来的村寨", durationMinutes:120, lockedWish:true },
+    { id:"river", time:"18:40", title:"甲秀楼 · 南明河", description:"避开白天人流，看灯影落进河里", durationMinutes:70 },
+  ];
+  const day = product?.plan?.days[0];
+  const items = day?.items?.length ? day.items : fallbackItems;
+  return <div className="phone-page result-screen itinerary-screen"><ResultHeader active="notes"/><section className="day-section"><div className="day-heading"><div><small>DAY 1 · AI ROUTE</small><h2>{day?.theme ?? "先从贵阳的烟火里落脚"}</h2></div><span>{draft.pace}</span></div><div className="timeline">{items.map((item,idx)=><article key={item.id}><time>{item.time}</time><i>{String(idx + 1).padStart(2,"0")}</i><div><h3>{item.title}</h3><p>{item.description}</p><span><Clock3/>{item.durationMinutes} min{item.lockedWish?<b><Lock/>心愿已锁定</b>:null}</span></div></article>)}</div></section>{product?.plan?.days[1] ? <button className="next-day"><span><small>DAY 2</small><strong>{product.plan.days[1].theme}</strong></span><ChevronRight/></button> : null}<div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
 }
 
 function MapScreen() {
-  const draft = useProduct()?.draft ?? initialQijingDraft;
-  return <div className="phone-page result-screen map-screen"><ResultHeader active="map"/><div className="map-toolbar"><div><strong>DAY 1 · 贵阳</strong><span>4 个地点 · 约 18.6 km</span></div><button><LocateFixed/>定位我</button></div><div className="map-canvas"><div className="map-route"></div><span className="marker m1">1</span><span className="marker m2">2</span><span className="marker m3">3</span><span className="marker m4">4</span><div className="map-place p1">{draft.arrival}</div><div className="map-place p2">青云市集</div><div className="map-place p3">省博物馆</div><div className="map-place p4">甲秀楼</div><button className="map-control">＋<span></span>−</button><div className="map-scale">2 km</div></div><div className="route-sequence"><span>01</span><i></i><span>02</span><i></i><span>03</span><i></i><span>04</span><p>{draft.arrival} → 青云市集 → 省博物馆 → 甲秀楼</p></div><p className="map-privacy"><ShieldCheck/>定位仅在本页使用；拒绝定位也能完整查看行程路线。</p><div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
+  const product = useProduct();
+  const draft = product?.draft ?? initialQijingDraft;
+  const locations = (product?.plan?.days[0]?.items.map(item => item.location).filter(Boolean) ?? [draft.arrival,"青云市集","省博物馆","甲秀楼"]).slice(0,4);
+  while (locations.length < 4) locations.push(["青云市集","省博物馆","甲秀楼"][locations.length - 1] || "贵阳");
+  return <div className="phone-page result-screen map-screen"><ResultHeader active="map"/><div className="map-toolbar"><div><strong>DAY 1 · 贵阳</strong><span>{locations.length} 个地点 · AI 顺序</span></div><button><LocateFixed/>定位我</button></div><div className="map-canvas"><div className="map-route"></div><span className="marker m1">1</span><span className="marker m2">2</span><span className="marker m3">3</span><span className="marker m4">4</span><div className="map-place p1">{locations[0]}</div><div className="map-place p2">{locations[1]}</div><div className="map-place p3">{locations[2]}</div><div className="map-place p4">{locations[3]}</div><button className="map-control">＋<span></span>−</button><div className="map-scale">2 km</div></div><div className="route-sequence"><span>01</span><i></i><span>02</span><i></i><span>03</span><i></i><span>04</span><p>{locations.join(" → ")}</p></div><p className="map-privacy"><ShieldCheck/>定位仅在本页使用；拒绝定位也能完整查看行程路线。</p><div className="result-actions"><button><SlidersHorizontal/>微调</button><button><Save/>收下这一程</button></div></div>;
 }
 
 function TuneScreen() {
@@ -251,15 +255,21 @@ function TuneScreen() {
 
 const screenComponents: Record<ScreenId, React.ComponentType> = { home:HomeScreen, talk:TalkScreen, invitation:InvitationScreen, wish:WishScreen, time:TimeScreen, pace:PaceScreen, travel:TravelScreen, interest:InterestScreen, boundary:BoundaryScreen, crystal:CrystalScreen, unfold:UnfoldScreen, itinerary:ItineraryScreen, map:MapScreen, tune:TuneScreen };
 
-export function QijingProductScreen({ screenId, draft, error = "", onDraftChange }: {
+export function QijingProductScreen({ screenId, draft, plan, assistantReply = "", busy = false, error = "", onDraftChange }: {
   screenId: QijingScreenId;
   draft: QijingDraft;
+  plan?: QijingPlan;
+  assistantReply?: string;
+  busy?: boolean;
   error?: string;
   onDraftChange: (draft: QijingDraft) => void;
 }) {
   const Screen = screenComponents[screenId];
   const value: ProductContextValue = {
     draft,
+    plan,
+    assistantReply,
+    busy,
     error,
     update: patch => onDraftChange({ ...draft, ...patch }),
   };

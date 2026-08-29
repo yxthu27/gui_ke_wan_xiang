@@ -146,6 +146,11 @@
 }
 .qijing-product-flow .convo-composer > input:focus { box-shadow: inset 0 0 0 1px var(--mountain); }
 .convo-form-error { margin: 6px 0 0; color: var(--cinnabar); font-size: 7px; line-height: 1.45; }
+.convo-ai-reply { margin: 8px 0 0; padding: 8px 9px; border-radius: 10px; background: rgba(23,60,52,.08); color: var(--mountain); display: flex; align-items: flex-start; gap: 6px; font-size: 8px; line-height: 1.5; }
+.convo-ai-reply svg { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 1px; }
+.qijing-product-flow button:disabled,.qijing-product-flow input:disabled { cursor: wait; opacity: .64; }
+.ai-spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: ai-spin .75s linear infinite; }
+@keyframes ai-spin { to { transform: rotate(360deg); } }
 .qijing-product-flow .tune-input > input {
   width: 100%;
   height: 43px;
@@ -157,6 +162,353 @@
   background: #fff;
   color: var(--ink);
   font-size: 7px;
+}
+
+/* Product polish: keep the 390 × 844 composition while making the live flow
+   readable and touch-friendly on shorter preview windows. */
+.merged-tabbar {
+  box-shadow: 0 -8px 24px rgba(23, 60, 52, .055);
+}
+.merged-tabbar button { position: relative; }
+.merged-tabbar button::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  border-radius: 99px;
+  background: var(--cinnabar);
+  opacity: 0;
+  transform: translateX(-50%) scaleX(.55);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.merged-tabbar button.is-active::before { opacity: .9; transform: translateX(-50%) scaleX(1); }
+.merged-tabbar button:focus { outline: 0; }
+.merged-tabbar button:focus-visible { outline: 0; }
+.merged-tabbar button:focus-visible .merged-tab-icon {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(182, 74, 58, .42);
+}
+
+.qijing-product-flow .convo-question-screen {
+  display: grid;
+  grid-template-rows: 47px clamp(260px, 40%, 306px) 52px minmax(0, 1fr);
+}
+.qijing-product-flow .convo-question-screen > .mock-topbar,
+.qijing-product-flow .convo-question-screen > .convo-stage,
+.qijing-product-flow .convo-question-screen > .convo-memory,
+.qijing-product-flow .convo-question-screen > .convo-answer-panel { height: auto; min-height: 0; }
+.qijing-product-flow .convo-answer-panel { overflow-y: auto; padding-bottom: 74px; }
+
+.qijing-product-flow .mock-topbar .text-action {
+  min-width: 58px;
+  min-height: 36px;
+  font-size: 11px;
+}
+.qijing-product-flow .convo-speaking span { font-size: 9px; }
+.qijing-product-flow .convo-subtitle { padding: 10px 13px 9px; }
+.qijing-product-flow .convo-subtitle small { font-size: 9px; }
+.qijing-product-flow .convo-subtitle strong { font-size: 13px; line-height: 1.5; }
+.qijing-product-flow .convo-subtitle p { font-size: 9px; line-height: 1.45; }
+.qijing-product-flow .convo-subtitle button {
+  min-height: 24px;
+  padding: 0 3px;
+  font-size: 9px;
+}
+.qijing-product-flow .convo-memory > span { font-size: 8px; margin-bottom: 4px; }
+.qijing-product-flow .convo-memory b { height: 24px; padding: 0 8px; font-size: 8px; }
+.qijing-product-flow .answer-lead { min-height: 34px; height: auto; }
+.qijing-product-flow .answer-lead span { font-size: 9px; }
+.qijing-product-flow .answer-lead button { min-height: 34px; font-size: 9px; }
+.qijing-product-flow .convo-composer > input { font-size: 12px; }
+.qijing-product-flow .convo-form-error,
+.qijing-product-flow .convo-ai-reply { font-size: 10px; }
+
+.qijing-product-flow .answer-duration > div:first-child span,
+.qijing-product-flow .answer-duration button { font-size: 8px; }
+.qijing-product-flow .answer-duration > div:first-child small { font-size: 9px; }
+.qijing-product-flow .answer-duration button { min-height: 34px; height: auto; }
+.qijing-product-flow .answer-locations small { font-size: 8px; }
+.qijing-product-flow .answer-locations strong { font-size: 10px; }
+.qijing-product-flow .answer-locations em { font-size: 8px; }
+.qijing-product-flow .screen-time .convo-answer-panel { padding: 10px 15px 76px; }
+.qijing-product-flow .screen-time .answer-lead { margin-bottom: 6px; }
+.qijing-product-flow .screen-time .answer-lead button {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid rgba(23,60,52,.12);
+  background: rgba(248,245,237,.64);
+  color: var(--mountain);
+}
+.qijing-product-flow .screen-time .answer-duration {
+  grid-template-columns: 86px minmax(0,1fr);
+  gap: 9px;
+  min-height: 86px;
+  padding: 11px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 18px;
+  background: linear-gradient(135deg,#173c33,#214d42);
+  box-shadow: 0 12px 26px rgba(23,60,52,.16);
+}
+.qijing-product-flow .screen-time .duration-summary {
+  position: relative;
+  padding: 3px 8px 3px 2px;
+  display: grid;
+  align-content: center;
+  border-right: 1px solid rgba(255,255,255,.13);
+}
+.qijing-product-flow .screen-time .duration-summary span { color: rgba(218,234,227,.72); font-size: 8px; }
+.qijing-product-flow .screen-time .duration-summary strong { margin-top: 4px; color: #fff; font: 30px/1 Georgia,serif; white-space: nowrap; }
+.qijing-product-flow .screen-time .duration-summary small { font: 10px system-ui,sans-serif; color: rgba(255,255,255,.78); }
+.qijing-product-flow .screen-time .duration-options {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  align-items: stretch;
+  gap: 4px;
+}
+.qijing-product-flow .screen-time .answer-duration .duration-options button {
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  padding: 4px 2px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.72);
+  font-size: 7px;
+  line-height: 1.2;
+  white-space: normal;
+}
+.qijing-product-flow .screen-time .answer-duration .duration-options button.active {
+  border-color: #c95443;
+  background: #c95443;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(115,38,29,.24);
+}
+.qijing-product-flow .screen-time .answer-locations {
+  position: relative;
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 24px minmax(0,1fr);
+  gap: 5px;
+  align-items: center;
+}
+.qijing-product-flow .screen-time .answer-locations > .location-choice {
+  min-width: 0;
+  height: 70px;
+  padding: 9px 9px;
+  grid-template-columns: 28px minmax(0,1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: 7px;
+  border: 1px solid rgba(23,60,52,.11);
+  border-radius: 15px;
+  background: rgba(248,245,237,.82);
+  box-shadow: 0 6px 18px rgba(23,60,52,.07);
+}
+.qijing-product-flow .screen-time .answer-locations > .location-choice > svg {
+  grid-row: 1 / 3;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 9px;
+  background: rgba(23,60,52,.09);
+  color: var(--mountain);
+}
+.qijing-product-flow .screen-time .answer-locations > .location-choice span { min-width: 0; gap: 2px; }
+.qijing-product-flow .screen-time .answer-locations > .location-choice small { color: #87928d; font-size: 7px; white-space: nowrap; }
+.qijing-product-flow .screen-time .answer-locations > .location-choice strong { overflow: hidden; color: #263832; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.qijing-product-flow .screen-time .answer-locations > .location-choice em {
+  grid-column: 2;
+  justify-self: start;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background: rgba(23,60,52,.07);
+  color: var(--mountain);
+  font-size: 7px;
+}
+.qijing-product-flow .screen-time .location-connector {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(23,60,52,.13);
+  border-radius: 50%;
+  background: #f4f0e6;
+  color: var(--mountain);
+  box-shadow: 0 3px 10px rgba(23,60,52,.08);
+}
+.qijing-product-flow .screen-time .location-connector::before,
+.qijing-product-flow .screen-time .location-connector::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: rgba(23,60,52,.22);
+}
+.qijing-product-flow .screen-time .location-connector::before { right: 100%; }
+.qijing-product-flow .screen-time .location-connector::after { left: 100%; }
+.qijing-product-flow .screen-time .location-connector i { display: none; }
+.qijing-product-flow .screen-time .location-connector svg { width: 11px; height: 11px; }
+.qijing-product-flow .screen-time .time-route-note {
+  margin-top: 9px;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 18px minmax(0,1fr);
+  gap: 7px;
+  align-items: start;
+  border-radius: 12px;
+  background: rgba(226,233,228,.76);
+  color: #52625b;
+}
+.qijing-product-flow .screen-time .time-route-note > svg { width: 17px; height: 17px; color: var(--cinnabar); }
+.qijing-product-flow .screen-time .time-route-note span { font-size: 8px; line-height: 1.45; }
+.qijing-product-flow .screen-time .time-route-note strong { display: block; margin-bottom: 2px; color: var(--mountain); font-size: 9px; }
+.qijing-product-flow .answer-pace button { min-height: 46px; height: auto; }
+.qijing-product-flow .answer-pace strong { font-size: 10px; }
+.qijing-product-flow .answer-pace small { font-size: 8px; }
+.qijing-product-flow .ajing-confirm span,
+.qijing-product-flow .convo-warning span { font-size: 8px; }
+.qijing-product-flow .ajing-confirm button,
+.qijing-product-flow .convo-warning button { min-height: 32px; height: auto; font-size: 8px; }
+.qijing-product-flow .convo-warning strong { font-size: 9px; }
+.qijing-product-flow .answer-modes button { min-height: 38px; height: auto; font-size: 9px; }
+.qijing-product-flow .travel-setting-label strong { font-size: 10px; }
+.qijing-product-flow .travel-setting-label small { font-size: 8px; }
+.qijing-product-flow .answer-travel-settings .travel-setting-options button { font-size: 9px; }
+.qijing-product-flow .answer-travel-settings .travel-setting-options button small { font-size: 8px; }
+.qijing-product-flow .answer-collected > span { font-size: 9px; }
+.qijing-product-flow .answer-collected b,
+.qijing-product-flow .answer-collected button { font-size: 8px; }
+.qijing-product-flow .answer-collected button { min-width: 30px; min-height: 30px; height: auto; }
+.qijing-product-flow .answer-collected em { font-size: 8px; }
+.qijing-product-flow .answer-tags button,
+.qijing-product-flow .answer-boundaries button { min-height: 34px; height: auto; font-size: 9px; }
+.qijing-product-flow .answer-boundaries section > span { font-size: 9px; }
+.qijing-product-flow .boundary-echo span { font-size: 8px; }
+.qijing-product-flow .boundary-echo button { min-height: 32px; height: auto; font-size: 8px; }
+.qijing-product-flow .convo-complete strong { font-size: 10px; }
+.qijing-product-flow .convo-complete span { font-size: 8px; }
+.qijing-product-flow .convo-complete button { min-height: 34px; height: auto; font-size: 8px; }
+.qijing-product-flow .convo-question-screen:has(.convo-complete) .convo-answer-panel {
+  padding-bottom: 138px;
+  scroll-padding-bottom: 138px;
+}
+
+.qijing-product-flow .subtitle-card small,
+.qijing-product-flow .subtitle-card button,
+.qijing-product-flow .recognized-row button,
+.qijing-product-flow .reply-area p { font-size: 9px; }
+.qijing-product-flow .subtitle-card button { min-height: 24px; padding: 0 3px; }
+.qijing-product-flow .recognized-row { height: 46px; }
+.qijing-product-flow .recognized-row button { min-height: 32px; }
+.qijing-product-flow .reply-area button { min-height: 40px; height: auto; font-size: 11px; }
+.qijing-product-flow .chat-composer div { font-size: 12px; }
+
+/* 路线页透明度：只降低容器底色，不影响文字、图标和交互可读性。 */
+.qijing-product-flow .mock-topbar { background: rgba(247, 243, 233, .44); }
+.qijing-product-flow .subtitle-card,
+.qijing-product-flow .convo-subtitle {
+  background: rgba(9, 33, 27, .54);
+  box-shadow: 0 12px 30px rgba(7, 28, 24, .12);
+}
+.qijing-product-flow .subtitle-card strong,
+.qijing-product-flow .convo-subtitle strong { text-shadow: 0 1px 8px rgba(0, 0, 0, .28); }
+.qijing-product-flow .recognized-row { background: rgba(232, 236, 231, .42); }
+.qijing-product-flow .reply-area { background: rgba(248, 245, 237, .3); }
+.qijing-product-flow .convo-memory { background: rgba(245, 241, 231, .26); }
+.qijing-product-flow .convo-answer-panel { background: rgba(247, 244, 235, .27); }
+.qijing-product-flow .chat-composer,
+.qijing-product-flow .convo-composer { background: rgba(247, 244, 235, .52); }
+
+.qijing-product-flow .recognized-row button,
+.qijing-product-flow .reply-area button,
+.qijing-product-flow .answer-wish-grid button,
+.qijing-product-flow .answer-locations > button,
+.qijing-product-flow .answer-pace button,
+.qijing-product-flow .answer-modes button,
+.qijing-product-flow .answer-tags button,
+.qijing-product-flow .answer-boundaries section,
+.qijing-product-flow .answer-boundaries button {
+  background-color: rgba(248, 245, 237, .42);
+  backdrop-filter: blur(7px);
+}
+.qijing-product-flow .answer-travel-settings > .travel-setting-row,
+.qijing-product-flow .answer-travel-settings .travel-setting-options button {
+  background-color: rgba(250, 247, 239, .4);
+  backdrop-filter: blur(7px);
+}
+.qijing-product-flow .answer-duration { background: rgba(23, 60, 52, .8); }
+.qijing-product-flow .answer-pace button.selected,
+.qijing-product-flow .answer-modes button.selected,
+.qijing-product-flow .answer-tags button.selected,
+.qijing-product-flow .answer-travel-settings button.active {
+  background-color: rgba(23, 60, 52, .82);
+}
+.qijing-product-flow .answer-wish-grid button.selected { background-color: rgba(245, 229, 223, .58); }
+.qijing-product-flow .answer-boundaries button.selected { background-color: rgba(182, 74, 58, .82); }
+
+.qijing-product-flow .talk-screen {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 63px;
+}
+.qijing-product-flow .talk-stage {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.qijing-product-flow .reply-area {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 8;
+  margin: -12px 10px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 17px 17px 0 0;
+  box-shadow: 0 -10px 28px rgba(23, 60, 52, .07);
+  backdrop-filter: blur(10px);
+}
+.qijing-product-flow .reply-area p { margin-bottom: 8px; }
+.qijing-product-flow .reply-area > div { grid-template-columns: 1fr; }
+.qijing-product-flow .reply-area button { min-height: 42px; }
+.qijing-product-flow .reply-area button.selected {
+  border-color: rgba(23, 60, 52, .7);
+  background: rgba(23, 60, 52, .82);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(23, 60, 52, .14);
+}
+
+/* 六问区向内收拢，让水墨底图从两侧和组件间隙自然露出。 */
+.qijing-product-flow .phone-viewport .convo-question-screen .mock-topbar {
+  background: rgba(247, 243, 233, .42);
+}
+.qijing-product-flow .phone-viewport .convo-question-screen .convo-memory {
+  margin-inline: 8px;
+  border-radius: 0 0 14px 14px;
+  background: rgba(245, 241, 231, .22);
+  backdrop-filter: blur(5px);
+}
+.qijing-product-flow .phone-viewport .convo-question-screen .convo-answer-panel {
+  position: relative;
+  z-index: 8;
+  margin: -4px 8px 0;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 16px 16px 0 0;
+  background: rgba(247, 244, 235, .2);
+  backdrop-filter: blur(6px);
+}
+.qijing-product-flow .phone-viewport .convo-question-screen .convo-composer {
+  left: 8px;
+  right: 8px;
+  width: auto;
+  border: 1px solid rgba(255, 255, 255, .26);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: rgba(247, 244, 235, .46);
+  backdrop-filter: blur(10px);
 }
 
 @media (max-width: 430px) {

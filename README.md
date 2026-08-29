@@ -2,6 +2,8 @@
 
 > 一款以贵州山水、人文与非遗体验为内容底座的 AI 旅行共创产品。
 
+**项目标签：#Guikesong**
+
 贵客万象不是传统的景点清单工具，而是一套从“理解旅行者”开始的行程生成体验。用户通过与数字向导「阿境」完成六轮自然对话，逐步表达心愿、时间、步速、交通、兴趣和旅途边界；系统据此形成客态结晶，并生成可查看、可微调、可收藏的贵州旅行方案。
 
 <p align="center">
@@ -111,8 +113,28 @@ qijing-ui-merged/
 
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
+
+在 `.env` 中配置阶跃星辰服务：
+
+```env
+STEPFUN_BASE_URL=https://api.stepfun.com/step_plan/v1
+STEPFUN_API_KEY=你的服务端接口密钥
+STEPFUN_CHAT_MODEL=step-3.7-flash
+STEPFUN_TIMEOUT_MS=65000
+```
+
+密钥只会由服务端 API 路由读取，不应写入客户端代码或提交到 Git。未配置密钥时，六问解析和行程生成会自动使用本地降级逻辑，产品流程仍可完整运行。
+
+### AI 服务接口
+
+| 地址 | 作用 |
+| --- | --- |
+| `POST /api/qijing/chat` | 理解六问自由输入并生成安全的 `draftPatch` |
+| `POST /api/qijing/plan` | 根据客态结晶生成结构化行程 |
+| `POST /api/qijing/refine` | 在保护心愿与边界的前提下微调现有行程 |
 
 默认开发地址通常为：
 
