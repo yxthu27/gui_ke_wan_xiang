@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>贵客万象</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f4ecd8;
+      --ink: #2b2a26;
+      --ink-mute: #8a8578;
+      --mount: #5d7869;
+      --seal: #a4432a;
+      --stage: #1a1a19;
+      --serif-cn: "Noto Serif SC", "Songti SC", "STSong", serif;
+      --serif-en: "Cormorant Garamond", "Times New Roman", serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--stage);
+      color: var(--ink);
+      font-family: var(--serif-cn);
+    }
+    .stage {
+      min-height: 100%;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+    .phone {
+      position: relative;
+      height: 100vh;
+      width: calc(100vh * 9 / 16);
+      max-width: 100vw;
+      background: var(--paper);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 36px 40px;
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.35), transparent 55%),
+        radial-gradient(140% 100% at 50% 100%, rgba(120,100,60,0.18), transparent 60%);
+      pointer-events: none;
+    }
+    .top, .mid, .foot { position: relative; z-index: 1; }
+    .brand {
+      letter-spacing: 0.42em;
+      font-family: var(--serif-en);
+      font-size: 12px;
+      color: var(--ink-mute);
+      text-transform: uppercase;
+    }
+    .seal {
+      position: absolute;
+      top: 44px;
+      right: 32px;
+      width: 42px;
+      height: 42px;
+      border: 1.5px solid var(--seal);
+      border-radius: 50%;
+      color: var(--seal);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      border-left: 4px solid var(--seal);
+      padding-left: 16px;
+      line-height: 1.15;
+    }
+    p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.8;
+      color: #4a4740;
+    }
+    .foot {
+      font-size: 13px;
+      color: var(--mount);
+      letter-spacing: 0.18em;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <main class="phone">
+      <div class="top">
+        <div class="brand">Guizhou</div>
+        <div class="seal">象</div>
+      </div>
+      <div class="mid">
+        <h1>贵客万象</h1>
+        <p>把贵州特色按兴趣推给客人，<br>替文旅把人送到此刻还不挤的地方。</p>
+      </div>
+      <div class="foot">贵客未行，万象先启</div>
+    </main>
+  </div>
+</body>
+</html>
