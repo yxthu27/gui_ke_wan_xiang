@@ -26,6 +26,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  isolation: isolate;
   background: #e8dfc6;
 }
 
@@ -460,6 +461,9 @@
   right: 10px;
   bottom: 12px;
   z-index: 7;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 24px);
   background: var(--paper);
   border: 1px solid var(--paper-edge);
   box-shadow: 0 16px 40px rgba(43, 42, 38, 0.18);
@@ -472,6 +476,7 @@
 
 .stroll-sheet-img {
   display: block;
+  flex: 0 0 auto;
   width: 100%;
   height: 120px;
   object-fit: cover;
@@ -516,7 +521,11 @@
 }
 
 .stroll-sheet-body {
+  min-height: 0;
   padding: 12px 14px 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .stroll-sheet-kicker {

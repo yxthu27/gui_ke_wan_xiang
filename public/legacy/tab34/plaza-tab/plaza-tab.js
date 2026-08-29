@@ -358,9 +358,13 @@
     </aside>`;
   }
 
+  function matchesChip(item) {
+    return state.chip === "全部" || item.tags.indexOf(state.chip) >= 0;
+  }
+
   function visibleCards() {
     let list = CARDS.slice();
-    if (state.chip !== "全部") list = list.filter(c => c.tags.indexOf(state.chip) >= 0);
+    list = list.filter(matchesChip);
     if (state.seg === "附近") list.sort((a, b) => a.near - b.near);
     return list;
   }
@@ -369,7 +373,8 @@
     const cards = visibleCards();
     const first = cards.slice(0, 4);
     const second = cards.slice(4, 8);
-    return `${featuredHTML(FEATURED)}
+    const featured = matchesChip(FEATURED) ? featuredHTML(FEATURED) : "";
+    return `${featured}
       ${first.length ? `<div class="gzp-masonry">${first.map(cardHTML).join("")}</div>` : ""}
       ${first.length && second.length ? clusterHTML() : ""}
       ${second.length ? `<div class="gzp-masonry">${second.map(cardHTML).join("")}</div>` : ""}
@@ -502,7 +507,7 @@
           </div>
         </div>
         <div class="gzp-chips" data-chips>
-          ${CHIPS.map(c => `<button type="button" class="gzp-chip ${c === "全部" ? "is-active" : ""}" data-chip="${c}">${c}</button>`).join("")}
+          ${CHIPS.map(c => `<button type="button" class="gzp-chip ${c === "全部" ? "is-active" : ""}" data-chip="${c}" aria-pressed="${c === "全部" ? "true" : "false"}">${c}</button>`).join("")}
         </div>
 
         <div class="gzp-feed" data-feed></div>
@@ -516,10 +521,20 @@
   /* ----------------------------------------------------------
      渲染与交互
      ---------------------------------------------------------- */
-  function renderFeed() {
+  function renderFeed(animate) {
     const feed = rt.root.querySelector("[data-feed]");
-    feed.innerHTML = feedHTML();
-    observeReveal();
+    const update = () => {
+      feed.innerHTML = feedHTML();
+      observeReveal();
+      requestAnimationFrame(() => feed.classList.remove("is-filtering"));
+    };
+    if (!animate) {
+      update();
+      return;
+    }
+    feed.classList.add("is-filtering");
+    clearTimeout(rt.filterTimer);
+    rt.filterTimer = setTimeout(update, 130);
   }
 
   function observeReveal() {
@@ -814,9 +829,15 @@
       }
       const chip = e.target.closest("[data-chip]");
       if (chip) {
+        if (state.chip === chip.dataset.chip) return;
         state.chip = chip.dataset.chip;
-        rt.root.querySelectorAll("[data-chip]").forEach(b => b.classList.toggle("is-active", b === chip));
-        renderFeed();
+        rt.root.querySelectorAll("[data-chip]").forEach(b => {
+          const active = b === chip;
+          b.classList.toggle("is-active", active);
+          b.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+        chip.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        renderFeed(true);
         return;
       }
       const card = e.target.closest("[data-card]");
@@ -886,7 +907,7 @@
     root.querySelector("[data-today]").textContent =
       `${String(today.getDate()).padStart(2, "0")} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
 
-    rt = { root, scroll: root.querySelector("[data-plaza-scroll]"), toastTimer: null, io: null, pubHandler: onPublishedJourney };
+    rt = { root, scroll: root.querySelector("[data-plaza-scroll]"), toastTimer: null, filterTimer: null, io: null, pubHandler: onPublishedJourney };
     window.addEventListener("guike:publish-journey", rt.pubHandler);
     renderFeed();
     bindEvents();
@@ -898,6 +919,7 @@
     if (rt.io) rt.io.disconnect();
     window.removeEventListener("guike:publish-journey", rt.pubHandler);
     clearTimeout(rt.toastTimer);
+    clearTimeout(rt.filterTimer);
     rt = null;
   }
 

@@ -930,7 +930,8 @@
         return;
       }
       if (ev.target.closest("[data-goto-plan]")) {
-        window.GuikeTabs.go("路线");
+        if (window.GuikeTabs && typeof window.GuikeTabs.go === "function") window.GuikeTabs.go("路线");
+        else window.parent.postMessage({ type: "guike:switch-tab", tab: "路线" }, "*");
         return;
       }
       const guestPost = ev.target.closest("[data-open-guest-post]");
@@ -1119,6 +1120,11 @@
   }
 
   window.GuikeStroll = { onShow, onHide };
+  window.addEventListener("message", (event) => {
+    if (event.data?.type !== "guike:visibility") return;
+    if (event.data.active) onShow();
+    else onHide();
+  });
 
   function applyHash() {
     const hash = decodeURIComponent((location.hash || "").replace(/^#/, ""));

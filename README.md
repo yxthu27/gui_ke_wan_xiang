@@ -1,113 +1,159 @@
-# vinext-starter
+# 贵客万象 · 启境
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+> 一款以贵州山水、人文与非遗体验为内容底座的 AI 旅行共创产品。
 
-## Prerequisites
+贵客万象不是传统的景点清单工具，而是一套从“理解旅行者”开始的行程生成体验。用户通过与数字向导「阿境」完成六轮自然对话，逐步表达心愿、时间、步速、交通、兴趣和旅途边界；系统据此形成客态结晶，并生成可查看、可微调、可收藏的贵州旅行方案。
 
-- Node.js `>=22.13.0`
-- Linux with `flock`, `curl`, and GNU `timeout`
+<p align="center">
+  <img src="./public/assets/ajing-guide.png" width="320" alt="贵客万象数字向导阿境" />
+</p>
 
-## Sites Lifecycle
+## 产品定位
 
-The Sites lifecycle CLI runs the locked dependency install before returning this checkout. Edit the source under `app/`, then checkpoint when a coherent milestone is ready to inspect or share. The remote Sites builder runs `npm run build` against the pushed commit. Do not repeat install or build as a normal pre-checkpoint step.
+贵客万象面向希望深度体验贵州、但不想被复杂攻略和表格式问卷打断的旅行者。产品以“自由表达、边界优先、行程可解释”为核心原则：
 
-This starter does not use `wrangler.jsonc`.
+- **先理解，再规划**：用连续对话代替一次性表单。
+- **保护真正重要的内容**：心愿与旅途边界在生成和微调阶段保持锁定。
+- **让推荐有理由**：行程不仅给出地点，也解释节奏、顺序与取舍。
+- **连接在地体验**：把山水、村寨、非遗、饮食和城市生活组织成完整旅程。
 
-`install:ci` is intentionally a single, non-retrying `npm ci`. It refuses a concurrent install for the same project, consumes a matching image-seeded npm cache with `--prefer-offline` while retaining registry fallback for a missing cache object, otherwise downloads and verifies the complete vinext tarball recorded in `package-lock.json`, limits npm to one socket, and terminates a stalled install. `build` applies a short timeout. These helpers target Linux and use GNU `timeout`; they are not native macOS scripts.
+## 核心体验
 
-Scripts that need writable project-scoped home, npm, XDG, and temporary paths use `scripts/sites-env.sh`. The `dev` and `start` scripts honor the caller's runtime environment and keep Wrangler logs inside the checkout. The generated `.sites-runtime/` directory is disposable and ignored by Git.
+### 1. 启境 · AI 行程共创
 
-## Included Shape
+「阿境」通过六轮对话建立旅行画像：
 
-- edit site code under `app/`
-- `app/chatgpt-auth.ts` provides optional dispatch-owned ChatGPT sign-in helpers
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+1. **心愿**：最多选择两个真正想遇见的场景。
+2. **时间**：确认停留天数、抵达与离开位置。
+3. **步速**：选择慢慢来、刚刚好或尽兴一点。
+4. **走法**：设置交通方式、是否换住处和最长转场。
+5. **风物**：收集非遗、饮食、摄影、村寨等兴趣。
+6. **边界**：锁定同行人、体力、早起、拥挤等不可妥协条件。
 
-## Workspace Auth Headers
+六问结束后，系统会依次呈现：
 
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```mermaid
+flowchart LR
+  A[自然对话] --> B[客态结晶]
+  B --> C[万象推演]
+  C --> D[行程手帖]
+  D --> E[路线显影]
+  E --> F[局部微调]
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+### 2. 随逛 · 在地内容探索
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+以地图和内容卡片组织贵州本地体验，支持贵客视角与全局视角切换，并可将感兴趣的地点或活动纳入当前旅程。
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- In a Server Component, start sign-in with
-  `<a href={chatGPTSignInPath(returnTo)} target="_top">`. The auth helper
-  module is server-only; do not import it into a Client Component.
-- Do not use `fetch`, XHR, a client-side router, or a framework link that can
-  prefetch the sign-in route. SIWC must start as a top-level navigation.
-- Never request the AuthAPI authorization endpoint directly. The dispatch-owned
-  `/signin-with-chatgpt` route must start the SIWC flow.
-- Use `chatGPTSignOutPath(returnTo)` for browser sign-out links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+### 3. 个人 · 旅行资产沉淀
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+承载个人行径、收藏、贵客帖与旅途内容，让一次规划可以继续被查看、整理和分享。
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+### 4. 广场 · 贵州体验社区
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+聚合旅行者发布的内容与在地灵感，形成可浏览、可发现、可回到个人空间的内容广场。
 
-## Diagnostic Commands
+## 已实现能力
 
-- `npm run install:ci`: perform the one bounded lockfile install
-- `npm run dev`: start the Vite/Vinext development server
-- `npm run build`: build the deployable Sites artifact
-- `npm run start`: start the built Vinext application
-- `npm test`: build and verify the rendered development-preview metadata
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+- 四栏产品外壳：路线、随逛、个人、广场。
+- 13 个启境产品页面及完整页面流转。
+- 六问选项、数量限制、输入校验和辅助文字输入。
+- 心愿第三项自动替换、风物标签删除和明确的选择反馈。
+- 客态结晶、行程结果、地图与微调页面共享真实用户答案。
+- 节奏、转场、住处设置的局部微调。
+- 基于 `sessionStorage` 的本机暂存与恢复。
+- iframe 页面与主导航之间的双向消息桥。
+- 随逛地图的显示/隐藏生命周期管理。
+- 键盘焦点、按压反馈、ARIA 状态和触控区域优化。
+- `/spec` 设计审阅工作台，保留完整页面规范与状态预览。
 
-Use build commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
+## 技术架构
 
-The timeout defaults can be overridden for a controlled canary with `SITES_INSTALL_TIMEOUT`, `SITES_INSTALL_KILL_AFTER`, `SITES_BUILD_TIMEOUT`, and `SITES_BUILD_KILL_AFTER`. A timeout fails the command; the helpers never retry an unchanged install or build.
+| 层级 | 技术与职责 |
+| --- | --- |
+| 应用框架 | React 19、Next.js 16 API、Vinext、Vite 8 |
+| 运行环境 | Cloudflare Worker 兼容 ESM 输出 |
+| UI 与图标 | TypeScript、CSS、Lucide React、定制双态 Tab 图标 |
+| 主产品流 | React Context + 本地状态驱动的启境页面状态机 |
+| 历史模块整合 | 同源 iframe + `CustomEvent` / `postMessage` 桥接 |
+| 本地持久化 | `sessionStorage`，用于对话草稿与行程暂存 |
+| 地图能力 | Leaflet、GCoord（随逛模块） |
+| 部署配置 | OpenAI Sites / Cloudflare 配置保留在 `.openai/hosting.json` |
 
-## Learn More
+## 项目结构
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+```text
+qijing-ui-merged/
+├─ app/
+│  ├─ page.tsx             # 四栏产品外壳、启境流程与 iframe 桥接
+│  ├─ spec/page.tsx        # 启境页面组件、问答状态与设计工作台
+│  ├─ globals.css          # 产品视觉系统与各页面样式
+│  └─ merged.css           # 合并层、底部导航与产品流覆盖样式
+├─ public/
+│  ├─ assets/              # 阿境、背景与产品视觉资源
+│  ├─ legacy/tab2/         # 随逛模块
+│  ├─ legacy/tab34/        # 个人与广场模块
+│  └─ tabbar-icons/        # 四栏导航黑白/彩色双态图标
+├─ scripts/                # Sites 安装与构建脚本
+├─ tests/                  # 构建及预览元数据验证
+└─ .openai/hosting.json    # Sites 托管声明
+```
+
+## 本地开发
+
+### 环境要求
+
+- Node.js `>= 22.13.0`
+- npm
+- Bash（执行项目内 Sites 构建脚本时需要）
+
+### 安装与启动
+
+```bash
+npm install
+npm run dev
+```
+
+默认开发地址通常为：
+
+```text
+http://127.0.0.1:5173/
+```
+
+### 生产构建
+
+```bash
+npm run build
+```
+
+在未配置 Bash 的 Windows 环境中，可使用以下命令完成原生构建验证：
+
+```powershell
+npx vite build
+```
+
+## 页面入口
+
+| 地址 | 用途 |
+| --- | --- |
+| `/` | 贵客万象完整产品体验 |
+| `/spec` | 启境全页面设计审阅与开发规范 |
+
+## 设计语言
+
+产品视觉以贵州山地气质为线索，使用宣纸米白、山黛青与朱砂红建立层级；通过水墨质感、留白、双态图标和克制的动效，表达“山水展开、旅程被理解”的体验。交互设计强调明确的选择状态、可撤销操作和不依赖悬停的移动端触控反馈。
+
+## 当前状态
+
+当前仓库为可交互产品原型与前端工程版本，核心页面、四栏导航、状态流转、草稿恢复及主要跨模块交互均已完成。后续可继续接入真实行程生成服务、账户体系、云端持久化、地图数据与内容审核能力。
+
+## 贡献说明
+
+提交改动前建议完成：
+
+```bash
+npx vite build
+git diff --check
+```
+
+请保持启境流程中的“心愿与边界不可被生成逻辑擅自覆盖”这一产品约束，并在新增视觉按钮时同步实现键盘、触控和反馈状态。

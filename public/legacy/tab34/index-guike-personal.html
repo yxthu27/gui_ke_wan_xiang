@@ -590,6 +590,13 @@
 <script>
   GuikePersonal.mount(document.querySelector('[data-pane="个人"]'));
   GuikePlaza.mount(document.querySelector('[data-pane="广场"]'));
+  window.addEventListener('guike:switch-tab', event => {
+    window.parent.postMessage({ type: 'guike:switch-tab', tab: event.detail?.tab }, '*');
+  });
+  window.addEventListener('message', event => {
+    if (event.data?.type !== 'guike:select-pane') return;
+    document.querySelector(`.tab[data-target="${event.data.pane}"]`)?.click();
+  });
 </script>
 </body>
 </html>

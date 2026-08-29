@@ -241,7 +241,10 @@
   }
 
   function isPosterImage(image) {
-    return String(image).startsWith(POSTER_PREFIX);
+    const path = String(image || "")
+      .replace(/\\/g, "/")
+      .split(/[?#]/, 1)[0];
+    return path.startsWith(POSTER_PREFIX) || path.includes(`/${POSTER_PREFIX}`);
   }
 
   function takeTags(list, max) {
