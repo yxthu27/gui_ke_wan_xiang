@@ -145,7 +145,11 @@
   async function removeBackgroundStepFun(source, options = {}) {
     options.onProgress?.({ key: "stepfun-upload", current: 0, total: 0, percent: null, engine: "stepfun" });
     const prepared = await prepareForCloud(source);
-    const response = await fetch("/api/qijing/cutout", {
+    const apiBaseUrl = String(window.__QIJING_API_BASE_URL__ || "").replace(/\/$/, "");
+    if (window.__QIJING_STATIC_EXPORT__ && !apiBaseUrl) {
+      throw new Error("GitHub Pages 静态版未配置远程 AI 服务");
+    }
+    const response = await fetch(`${apiBaseUrl}/api/qijing/cutout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image: prepared, subject: options.subject || undefined }),

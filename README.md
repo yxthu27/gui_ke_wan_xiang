@@ -2,6 +2,11 @@
 
 > 一款以贵州山水、人文与非遗体验为内容底座的 AI 旅行共创产品。
 
+[![Deploy GitHub Pages](https://github.com/yxthu27/gui_ke_wan_xiang/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/yxthu27/gui_ke_wan_xiang/actions/workflows/deploy-pages.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-1f4d43.svg)](./LICENSE)
+
+在线体验：[GitHub Pages](https://yxthu27.github.io/gui_ke_wan_xiang/) · 设计规范：[在线 `/spec`](https://yxthu27.github.io/gui_ke_wan_xiang/spec/)
+
 **项目标签：#Guikesong**
 
 贵客万象不是传统的景点清单工具，而是一套从“理解旅行者”开始的行程生成体验。用户通过与数字向导「阿境」完成六轮自然对话，逐步表达心愿、时间、步速、交通、兴趣和旅途边界；系统据此形成客态结晶，并生成可查看、可微调、可收藏的贵州旅行方案。
@@ -81,6 +86,16 @@ flowchart LR
 | 本地持久化 | `sessionStorage`，用于对话草稿与行程暂存 |
 | 地图能力 | Leaflet、GCoord（随逛模块） |
 | 部署配置 | OpenAI Sites / Cloudflare 配置保留在 `.openai/hosting.json` |
+
+## 运行模式
+
+| 模式 | 页面能力 | AI 能力 | 适用场景 |
+| --- | --- | --- | --- |
+| 本地/服务端模式 | 完整 | 可接 StepFun 服务端密钥 | 开发与真实 AI 联调 |
+| GitHub Pages 静态模式 | 完整 | 使用本地安心方案 | 产品演示与 UI 审阅 |
+| Pages + 独立 API | 完整 | 调用外部 HTTPS 后端 | 正式部署方向 |
+
+GitHub Pages 无法运行 `/api/qijing/*`，也不能安全保存 AI 密钥。正式启用 AI 时，应把接口部署到 Cloudflare Worker 或其他服务端环境，并通过公开的 `NEXT_PUBLIC_QIJING_API_BASE_URL` 指向该后端。
 
 ## 项目结构
 
@@ -164,6 +179,26 @@ npm run build
 npx vite build
 ```
 
+### 部署到 GitHub Pages
+
+GitHub Pages 只能托管静态文件，不能运行本项目的 `/api/qijing/*` 服务端路由，也不能安全保存 `STEPFUN_API_KEY`。仓库因此提供了独立的静态构建：
+
+```bash
+npm run build:pages
+```
+
+产物位于 `dist/client`，会自动适配项目站点路径 `/gui_ke_wan_xiang/`、生成 `.nojekyll` 与 `404.html`，并保留完整的本地安心行程和浏览器本地抠图能力。不要把 `STEPFUN_API_KEY` 添加到 GitHub Actions 或任何 `NEXT_PUBLIC_*` 变量中。
+
+`.github/workflows/deploy-pages.yml` 会在 `main` 分支更新后自动构建并发布。首次启用时，在 GitHub 仓库的 **Settings → Pages → Build and deployment** 中将 Source 设为 **GitHub Actions**，也可以在 Actions 页面手动运行 `Deploy GitHub Pages`。
+
+如需在 Pages 上启用真实 AI，需要把 API 路由单独部署到支持服务端运行和 Secret 的平台，并在仓库 **Settings → Secrets and variables → Actions → Variables** 中增加：
+
+```text
+QIJING_API_BASE_URL=https://你的后端域名
+```
+
+这里只能填写公开的后端基础地址。真实 AI 密钥必须保留在后端；后端还需要允许 `https://yxthu27.github.io` 发起 CORS 请求。不配置该变量时，Pages 会直接使用本地安心方案，不会等待一个必然返回 404 的接口。
+
 ## 页面入口
 
 | 地址 | 用途 |
@@ -177,7 +212,16 @@ npx vite build
 
 ## 当前状态
 
-当前仓库为可交互产品原型与前端工程版本，核心页面、四栏导航、状态流转、草稿恢复及主要跨模块交互均已完成。后续可继续接入真实行程生成服务、账户体系、云端持久化、地图数据与内容审核能力。
+当前仓库为可交互产品原型与前端工程版本。核心页面、四栏导航、状态流转、草稿恢复、AI 服务端接口和 GitHub Pages 静态构建已经具备；账户体系、云端持久化、正式地图数据、内容审核以及 ASR/TTS 仍需要独立后端。
+
+静态安心方案用于服务降级和演示，不应替代真实旅行信息核验。地点营业状态、交通时间、天气等时效信息在正式产品中必须来自可靠数据源。
+
+## 项目文档
+
+- [真实数字人接入评估与实施计划](./docs/REAL_DIGITAL_HUMAN_INTEGRATION_PLAN.md)
+- `/spec`：产品页面、交互状态和开发规则审阅入口。
+
+数字人模型目前不在仓库中。任何 VRM 或其他角色资产在加入项目前，必须先确认公开托管、修改和再分发权限。
 
 ## 贡献说明
 
@@ -189,3 +233,11 @@ git diff --check
 ```
 
 请保持启境流程中的“心愿与边界不可被生成逻辑擅自覆盖”这一产品约束，并在新增视觉按钮时同步实现键盘、触控和反馈状态。
+
+## 许可
+
+项目原创源代码使用 [MIT License](./LICENSE)。第三方库、图片、字体、地图数据、用户内容、品牌素材和未来接入的数字人模型不因本仓库的 MIT License 自动获得授权，仍适用各自权利人与许可条款。
+
+---
+
+**贵客未行，万象先启。**
