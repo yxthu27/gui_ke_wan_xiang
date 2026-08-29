@@ -90,7 +90,7 @@ function TabOne() {
     setAiBusy(true);
     setAssistantReply("");
     try {
-      const response = await fetch("/api/qijing/chat", {
+      const response = await fetch("/gui_ke_wan_xiang/api/qijing/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ screenId, userText, draft }),
@@ -117,7 +117,7 @@ function TabOne() {
     showNotice(refine ? "阿境正在按你的新要求微调" : "阿境正在推演这一程", 2400);
     try {
       const canRefine = refine && plan && draft.note.trim();
-      const response = await fetch(canRefine ? "/api/qijing/refine" : "/api/qijing/plan", {
+      const response = await fetch(canRefine ? "/gui_ke_wan_xiang/api/qijing/refine" : "/gui_ke_wan_xiang/api/qijing/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(canRefine ? { draft, currentPlan: plan, instruction: draft.note.trim() } : { draft }),
@@ -249,12 +249,12 @@ export default function HomePage() {
   return <main className="merged-stage"><section className="merged-phone" aria-label="贵客万象">
     <div className="merged-content">
       <div className={`merged-pane ${activeTab === "qijing" ? "is-active" : ""}`} aria-hidden={activeTab !== "qijing"}><TabOne /></div>
-      <div className={`merged-pane ${activeTab === "stroll" ? "is-active" : ""}`} aria-hidden={activeTab !== "stroll"}><LegacyFrame src="/legacy/tab2/index.html" title="随逛" active={activeTab === "stroll"} allow="geolocation" onSwitch={setActiveTab} /></div>
-      <div className={`merged-pane ${activeTab === "personal" || activeTab === "plaza" ? "is-active" : ""}`} aria-hidden={activeTab !== "personal" && activeTab !== "plaza"}><LegacyFrame src="/legacy/tab34/index-guike-personal.html" title="个人与广场" active={activeTab === "personal" || activeTab === "plaza"} pane={tab34Pane} allow="camera; geolocation" onSwitch={setActiveTab} /></div>
+      <div className={`merged-pane ${activeTab === "stroll" ? "is-active" : ""}`} aria-hidden={activeTab !== "stroll"}><LegacyFrame src="/gui_ke_wan_xiang/legacy/tab2/index.html" title="随逛" active={activeTab === "stroll"} allow="geolocation" onSwitch={setActiveTab} /></div>
+      <div className={`merged-pane ${activeTab === "personal" || activeTab === "plaza" ? "is-active" : ""}`} aria-hidden={activeTab !== "personal" && activeTab !== "plaza"}><LegacyFrame src="/gui_ke_wan_xiang/legacy/tab34/index-guike-personal.html" title="个人与广场" active={activeTab === "personal" || activeTab === "plaza"} pane={tab34Pane} allow="camera; geolocation" onSwitch={setActiveTab} /></div>
     </div>
     <nav className="merged-tabbar" aria-label="主导航">
       {mainTabs.map(tab => <button key={tab.id} className={activeTab === tab.id ? "is-active" : ""} onClick={() => setActiveTab(tab.id)} aria-current={activeTab === tab.id ? "page" : undefined} aria-label={tab.label}>
-        <span className="merged-tab-icon" aria-hidden="true"><img className="ico-bw" src={`/tabbar-icons/${tab.icon}-bw.png`} alt="" /><img className="ico-color" src={`/tabbar-icons/${tab.icon}-color.png`} alt="" /></span>
+        <span className="merged-tab-icon" aria-hidden="true"><img className="ico-bw" src={`/gui_ke_wan_xiang/tabbar-icons/${tab.icon}-bw.png`} alt="" /><img className="ico-color" src={`/gui_ke_wan_xiang/tabbar-icons/${tab.icon}-color.png`} alt="" /></span>
         <span className="merged-tab-label">{tab.label}</span>
       </button>)}
     </nav>

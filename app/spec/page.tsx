@@ -84,7 +84,7 @@ function StepHeader({ step, name, title, note }: { step: number; name: string; t
 function HomeScreen() {
   return <div className="phone-page home-screen">
     <header className="brand-bar"><div><span>GUIZHOU</span><strong>贵客万象</strong></div><button className="round-bag" aria-label="行囊"><Backpack /></button></header>
-    <section className="hero-visual"><div className="hero-copy"><span className="eyebrow"><Sparkles />贵客未行 · 万象先启</span><h1>这一次，贵州<br />想怎么遇见你？</h1><p>先说一句想法，阿境会陪你把愿望慢慢说清。</p></div><div className="guide-wrap"><img src="/assets/ajing-guide.png" alt="阿境数字人形象" /><span className="guide-role">AI 在地向导</span><b>阿境 · 先听你说</b></div><div className="fortune-card"><small>今日万象签</small><strong>山路会绕一点，<br />好风景不会。</strong><button>换一句贵州的暗示 ↻</button></div></section>
+    <section className="hero-visual"><div className="hero-copy"><span className="eyebrow"><Sparkles />贵客未行 · 万象先启</span><h1>这一次，贵州<br />想怎么遇见你？</h1><p>先说一句想法，阿境会陪你把愿望慢慢说清。</p></div><div className="guide-wrap"><img src="/gui_ke_wan_xiang/assets/ajing-guide.png" alt="阿境数字人形象" /><span className="guide-role">AI 在地向导</span><b>阿境 · 先听你说</b></div><div className="fortune-card"><small>今日万象签</small><strong>山路会绕一点，<br />好风景不会。</strong><button>换一句贵州的暗示 ↻</button></div></section>
     <section className="ask-card"><div className="ask-title"><div className="mini-avatar">境</div><div><strong>告诉阿境，你想怎样抵达贵州</strong><span>阿境会在聊天里把六个问题慢慢聊清</span></div><em>AI 规划</em></div><div className="text-box">第一次来贵州，想看瀑布和村寨，也想吃街边小店……<span>34 / 500</span></div><div className="quick-tags"><button>第一次来贵州</button><button>带父母慢慢走</button><button>非遗与烟火</button></div><PrimaryButton icon={<MessageCircle />}>带着这句话，和阿境聊聊</PrimaryButton><p className="micro-note"><ShieldCheck /> 对话中的心愿与边界会请你再次确认</p></section>
     <section className="six-entry"><div className="seal-icon">六</div><div><strong>开境六问 · 由阿境陪你聊出来</strong><p>不填问卷，在对话里聊心愿、时间、步速与边界</p></div><button>从第一问聊起 <ChevronRight /></button></section>
     <nav className="tabbar"><button className="active"><Compass /><span>启境</span></button><button><MapIcon /><span>随逛</span></button><button><UserRound /><span>个人</span></button><button><Grid2X2 /><span>广场</span></button></nav>
@@ -92,7 +92,7 @@ function HomeScreen() {
 }
 
 function TalkScreen() {
-  return <div className="phone-page talk-screen"><section className="talk-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="speaking-indicator"><i></i><i></i><i></i><span>阿境正在说</span></div><div className="subtitle-card"><small>阿境 · 开场</small><strong>我听见了：瀑布、村寨，还有街边小店。我们再聊六件事，就能把这一程慢慢拼出来。</strong><div><button><Play />再说一遍</button></div></div></section><div className="reply-area"><p>阿境会一次只问一件事，你随时可以在下方补充</p><div><button className="selected">开始聊六问</button></div></div><div className="chat-composer"><button aria-label="语音"><Mic /></button><div>直接和阿境说你的想法……</div><button className="send" aria-label="发送"><Send /></button></div></div>;
+  return <div className="phone-page talk-screen"><section className="talk-stage"><img src="/gui_ke_wan_xiang/assets/ajing-guide.png" alt="阿境数字人" /><div className="speaking-indicator"><i></i><i></i><i></i><span>阿境正在说</span></div><div className="subtitle-card"><small>阿境 · 开场</small><strong>我听见了：瀑布、村寨，还有街边小店。我们再聊六件事，就能把这一程慢慢拼出来。</strong><div><button><Play />再说一遍</button></div></div></section><div className="reply-area"><p>阿境会一次只问一件事，你随时可以在下方补充</p><div><button className="selected">开始聊六问</button></div></div><div className="chat-composer"><button aria-label="语音"><Mic /></button><div>直接和阿境说你的想法……</div><button className="send" aria-label="发送"><Send /></button></div></div>;
 }
 
 function InvitationScreen() {
@@ -110,7 +110,7 @@ function ConvoQuestionShell({ step, name, question, helper, memory, children, co
   const product = useProduct();
   return <div className={`phone-page convo-question-screen convo-step-${step}`}>
     <TopBar title="与阿境聊聊" action="暂存" />
-    <section className="convo-stage"><img src="/assets/ajing-guide.png" alt="阿境数字人" /><div className="convo-speaking"><i></i><i></i><i></i><span>阿境正在问</span></div><div className="convo-subtitle"><small>阿境 · {name}</small><strong>{question}</strong><p>{helper}</p><div><button><Play />再说一遍</button><button>换个问法</button></div></div></section>
+    <section className="convo-stage"><img src="/gui_ke_wan_xiang/assets/ajing-guide.png" alt="阿境数字人" /><div className="convo-speaking"><i></i><i></i><i></i><span>阿境正在问</span></div><div className="convo-subtitle"><small>阿境 · {name}</small><strong>{question}</strong><p>{helper}</p><div><button><Play />再说一遍</button><button>换个问法</button></div></div></section>
     <div className="convo-memory"><span>阿境已经记住</span><div>{memory.map((item, idx) => <b key={item} className={idx === 0 ? "locked" : ""}>{idx === 0 ? <Lock /> : null}{item}</b>)}</div></div>
     <section className="convo-answer-panel"><div className="answer-lead"><span>可以点选，也可以直接告诉阿境</span><button>我自己说</button></div>{children}{product?.assistantReply ? <p className="convo-ai-reply" role="status"><Sparkles />{product.assistantReply}</p> : null}{product?.error ? <p className="convo-form-error" role="alert">{product.error}</p> : null}</section>
     {complete ? <div className="convo-complete"><Sparkles /><div><strong>六问都聊清楚了</strong><span>阿境会先把记住的内容复述给你确认。</span></div><button>看看阿境记住了什么</button></div> : null}

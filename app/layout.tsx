@@ -5,7 +5,7 @@ import "./merged.css";
 export const metadata: Metadata = {
   title: "贵客万象",
   description: "启境、随逛、个人与广场合为一程的贵州旅行体验。",
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+  icons: { icon: "/gui_ke_wan_xiang/favicon.svg", shortcut: "/gui_ke_wan_xiang/favicon.svg" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
