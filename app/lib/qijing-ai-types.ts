@@ -11,6 +11,7 @@ export type QijingDraft = {
   interests: string[];
   boundaries: string[];
   note: string;
+  supplements?: Array<{ screenId: string; text: string; createdAt: string }>;
 };
 
 export type QijingPlanItem = {
@@ -21,6 +22,7 @@ export type QijingPlanItem = {
   durationMinutes: number;
   location: string;
   lockedWish?: boolean;
+  wishRefs?: string[];
 };
 
 export type QijingPlanDay = {

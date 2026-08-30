@@ -30,6 +30,8 @@
   let detailView;
   const STORAGE_RUNTIME = "guikesong-stroll-runtime";
   const STORAGE_ITINERARY = "guikesong-today-extra-pois";
+  const FAVORITE_STORAGE_KEY = "guike-favorite-places-v1";
+  const Repository = window.GuikeRepository;
   const DEFAULT_ZOOM = 15;
   const MIN_ZOOM = 13;
   const MAX_ZOOM = 17;
@@ -124,9 +126,38 @@
     );
   }
 
+  function saveFavoritePlace(id, remove) {
+    try {
+      const value = JSON.parse(localStorage.getItem(FAVORITE_STORAGE_KEY) || "[]");
+      const list = Array.isArray(value) ? value : [];
+      const stableId = `stroll-${id}`;
+      const next = list.filter(item => item.id !== stableId);
+      if (!remove) {
+        const poi = wrapPoi(core.poiById(state.data, id));
+        next.unshift({
+          id: stableId,
+          sourceId: id,
+          name: poi.name,
+          category: poi.kind === "food" ? "food" : poi.kind === "scenic" ? "scenic" : "experience",
+          city: "贵阳",
+          district: "随逛",
+          description: poi.event?.timeText || poi.category?.label || "从随逛收藏的在地体验。",
+          lat: poi.lat,
+          lng: poi.lng,
+          savedAt: new Date().toISOString().slice(0, 10),
+        });
+      }
+      if (Repository) {
+        if (remove) Repository.removeFavorite(stableId);
+        else Repository.upsertFavorite(next[0]);
+      } else localStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(next));
+    } catch (_error) { /* 存储失败时保留当前页面内状态 */ }
+  }
+
   function writeItinerary(poi) {
+    const shared = Repository?.read();
     const raw = localStorage.getItem(STORAGE_ITINERARY);
-    const list = raw ? JSON.parse(raw) : [];
+    const list = shared ? shared.stroll.extraPois.slice() : raw ? JSON.parse(raw) : [];
     if (list.some((x) => x.id === poi.id)) return;
     list.push({
       id: poi.id,
@@ -135,7 +166,43 @@
       lng: poi.lng,
       categoryId: poi.categoryId,
     });
-    localStorage.setItem(STORAGE_ITINERARY, JSON.stringify(list));
+    if (Repository) {
+      Repository.setStroll({ extraPois: list });
+      Repository.addPlaceToActivePlan({
+        id: poi.id, name: poi.name, lat: poi.lat, lng: poi.lng,
+        description: poi.event?.timeText || poi.category?.intro || "从随逛加入主规划。",
+        source: "stroll"
+      });
+    }
+    else localStorage.setItem(STORAGE_ITINERARY, JSON.stringify(list));
+  }
+
+  const WISH_TO_TAG = { "城市烟火": "cityLife", "山水大景": "grandLandscape", "村寨慢游": "villageSlowTravel", "非遗风物": "intangibleHeritage", "去野一下": "outdoorAdventure", "贵州寻味": "guizhouTaste" };
+  const INTEREST_TO_TAG = { "历史博物": "historyMuseum", "非遗手作": "intangibleCraft", "咖啡": "coffee", "地方小吃": "localFood", "山水观景": "landscape", "摄影": "photography", "村寨": "village", "徒步": "hiking", "夜生活": "nightlife", "市集": "market", "音乐美术": "musicArt", "亲子游玩": "familyFun" };
+
+  function syncRepositorySession() {
+    if (!Repository || !state.session || !state.data) return;
+    const shared = Repository.read();
+    const plan = shared.activePlan;
+    const draft = plan?.draft || shared.draft || {};
+    if (plan && Array.isArray(plan.days) && plan.days.length) {
+      state.session.planned = true;
+      state.session.answers.wishes = (draft.wishes || []).map(value => WISH_TO_TAG[value]).filter(Boolean);
+      state.session.answers.interests = (draft.interests || []).map(value => INTEREST_TO_TAG[value]).filter(Boolean);
+      state.session.answers.pace = draft.pace === "慢慢来" ? "slow" : draft.pace === "尽兴一点" ? "full" : "balanced";
+      state.session.answers.mobility.canChangeHotel = Boolean(draft.changeHotel);
+      state.session.answers.mobility.maxTransferMinutes = Number(draft.maxTransfer) || 60;
+      state.session.answers.trip.durationDays = plan.days.length;
+      state.session.answers.trip.startLocation.name = draft.arrival || state.session.answers.trip.startLocation.name;
+      state.session.answers.trip.endLocation.name = draft.departure || state.session.answers.trip.endLocation.name;
+      const today = new Date().toISOString().slice(0, 10);
+      const activeDay = plan.days.find(day => day.date === today) || plan.days[0];
+      const placeNames = (activeDay?.places || []).map(place => String(place.name || place.title || "").replace(/\s|·.*$/g, "")).filter(Boolean);
+      const matched = state.data.pois.filter(poi => placeNames.some(name => poi.name.includes(name) || name.includes(poi.name))).map(poi => poi.id);
+      const extraIds = shared.stroll.extraPois.map(poi => poi.id).filter(id => state.data.pois.some(poi => poi.id === id));
+      state.session.itinerary.todayPoiIds = [...new Set([...matched, ...extraIds])];
+    }
+    state.session.itinerary.visitedPoiIds = [...new Set([...(state.session.itinerary.visitedPoiIds || []), ...shared.stroll.visitedPoiIds])];
   }
 
   async function loadJson(url) {
@@ -527,6 +594,7 @@
 
   function openDetail(id) {
     state.session = store.markVisited(state.session, id, window.localStorage);
+    Repository?.setStroll({ visitedPoiIds: state.session.itinerary.visitedPoiIds });
     const poi = wrapPoi(core.poiById(state.data, id));
     closePreview();
     const sheet = $("stroll-sheet");
@@ -585,6 +653,7 @@
 
   function releaseShop(id) {
     state.collectedIds = core.releaseCollected(state.collectedIds, id);
+    saveFavoritePlace(id, true);
     if (state.posterPoiId === id) closePoster();
     saveRuntime();
     renderDock();
@@ -752,6 +821,7 @@
   function onFavor(raw, heart) {
     const id = resolveFavorId(raw);
     state.collectedIds = core.collectId(state.collectedIds, id);
+    saveFavoritePlace(id, false);
     saveRuntime();
     heart.classList.add("is-on");
     hideFavorHints();
@@ -1031,6 +1101,7 @@
 
     state.data = await loadJson("pois.json");
     state.session = await store.load(loadJson, window.localStorage);
+    syncRepositorySession();
     state.window = core.resolveWindow(state.session, new Date());
     state.mode = state.session.planned ? core.MODE_GUEST : core.MODE_GLOBAL;
     loadRuntime();
@@ -1108,6 +1179,7 @@
 
   async function onShow() {
     await init();
+    syncRepositorySession();
     state.map.invalidateSize();
     renderModes();
     renderMarkers();

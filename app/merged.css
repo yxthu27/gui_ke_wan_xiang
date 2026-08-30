@@ -169,6 +169,8 @@
 .merged-tabbar {
   box-shadow: 0 -8px 24px rgba(23, 60, 52, .055);
 }
+
+.merged-phone.is-modal-open .merged-tabbar { display: none; }
 .merged-tabbar button { position: relative; }
 .merged-tabbar button::before {
   content: "";
@@ -405,7 +407,50 @@
 .qijing-product-flow .recognized-row { height: 46px; }
 .qijing-product-flow .recognized-row button { min-height: 32px; }
 .qijing-product-flow .reply-area button { min-height: 40px; height: auto; font-size: 11px; }
-.qijing-product-flow .chat-composer div { font-size: 12px; }
+.qijing-product-flow .chat-composer div,
+.qijing-product-flow .chat-composer input { font-size: 12px; }
+.qijing-product-flow .chat-composer input {
+  width: 100%;
+  min-width: 0;
+  height: 37px;
+  border: 0;
+  outline: 0;
+  border-radius: 19px;
+  padding: 0 12px;
+  background: #ecebe5;
+  color: var(--ink);
+}
+.qijing-product-flow .chat-composer input:focus { box-shadow: inset 0 0 0 1px var(--mountain); }
+.qijing-product-flow .chat-composer .send:disabled { background: #cbd2ce; color: #75807b; cursor: not-allowed; }
+.qijing-product-flow .chat-composer button.is-listening,
+.qijing-product-flow .convo-composer button.is-listening {
+  background: var(--cinnabar);
+  color: #fff;
+  animation: qijing-voice-pulse 1.25s ease-in-out infinite;
+}
+.qijing-product-flow .voice-feedback {
+  margin: 7px 0 0;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgba(182, 74, 58, .09);
+  color: #7f3329;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.qijing-product-flow .voice-feedback svg { flex: 0 0 auto; width: 13px; height: 13px; }
+.qijing-product-flow .speaking-indicator.is-listening,
+.qijing-product-flow .convo-speaking.is-listening { background: rgba(182, 74, 58, .82); }
+@keyframes qijing-voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(182, 74, 58, .25); }
+  50% { box-shadow: 0 0 0 7px rgba(182, 74, 58, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qijing-product-flow .chat-composer button.is-listening,
+  .qijing-product-flow .convo-composer button.is-listening { animation: none; }
+}
 
 /* 路线页透明度：只降低容器底色，不影响文字、图标和交互可读性。 */
 .qijing-product-flow .mock-topbar { background: rgba(247, 243, 233, .44); }

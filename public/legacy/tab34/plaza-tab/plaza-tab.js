@@ -5,6 +5,8 @@
 (function () {
   "use strict";
 
+  const Repository = window.GuikeRepository;
+
   /* ----------------------------------------------------------
      图片（执行文档 §26/§40：真实贵州实拍，Wikimedia Commons，
      禁止 AI 生成图冒充实拍；加载失败由 guizhou-photos.js 全局降级）
@@ -572,15 +574,19 @@
       state.collected.splice(idx, 1);
       item.saves = Math.max(0, item.saves - 1);
       [btn, dockBtn].forEach(b => b && b.classList.remove("is-saved"));
+      Repository?.removeSavedJourney(`saved-from-${item.id}`);
     } else {
       state.collected.push(id);
       item.saves += 1;
       [btn, dockBtn].forEach(b => b && b.classList.add("is-saved"));
       // 收藏的行径同步进个人页「我的收藏 · 他人行径」
-      const ok = window.GuikePersonal?.addSavedJourney(buildSavedRoute(item));
+      const route = buildSavedRoute(item);
+      const ok = window.GuikePersonal?.addSavedJourney(route);
+      if (ok === false || ok == null) Repository?.upsertSavedJourney(route);
       showToast(ok === false ? "已收进我的路线（个人页尚未打开，稍后自动同步）" : "已收进我的路线 · 存入个人收藏夹");
     }
     saveCollected();
+    if (String(item.id).startsWith("pub-")) Repository?.upsertPublishedJourney(Object.assign({}, item, { img: postcardFallbackArt(item.route || []) }));
     [btn, dockBtn].forEach(b => {
       if (!b) return;
       b.classList.remove("is-pop");
@@ -802,6 +808,7 @@
     if (!rt) return;
     const card = journeyToCard(e.detail || {});
     CARDS.unshift(card);
+    Repository?.upsertPublishedJourney(Object.assign({}, card, { img: postcardFallbackArt(card.route || []) }));
     renderFeed();
     const growing = rt.root.querySelector("[data-growing]");
     growing.textContent = String(Number(growing.textContent) + 1);
@@ -906,13 +913,27 @@
     if (rt) destroy();
     root.innerHTML = templateHTML();
 
+    const published = Repository?.read().publishedJourneys || [];
+    published.slice().reverse().forEach(card => {
+      if (!CARDS.some(item => item.id === card.id)) CARDS.unshift(card);
+    });
+
     const today = new Date();
     const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     root.querySelector("[data-today]").textContent =
       `${String(today.getDate()).padStart(2, "0")} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
 
-    rt = { root, scroll: root.querySelector("[data-plaza-scroll]"), toastTimer: null, filterTimer: null, io: null, pubHandler: onPublishedJourney };
+    rt = { root, scroll: root.querySelector("[data-plaza-scroll]"), toastTimer: null, filterTimer: null, io: null, pubHandler: onPublishedJourney, repositoryUnsubscribe: null };
     window.addEventListener("guike:publish-journey", rt.pubHandler);
+    rt.repositoryUnsubscribe = Repository?.subscribe((shared, section) => {
+      if (!rt || !["publishedJourneys", "all"].includes(section)) return;
+      shared.publishedJourneys.slice().reverse().forEach(card => {
+        const index = CARDS.findIndex(item => item.id === card.id);
+        if (index >= 0) CARDS[index] = Object.assign(CARDS[index], card);
+        else CARDS.unshift(card);
+      });
+      renderFeed();
+    });
     renderFeed();
     bindEvents();
     return rt;
@@ -922,6 +943,7 @@
     if (!rt) return;
     if (rt.io) rt.io.disconnect();
     window.removeEventListener("guike:publish-journey", rt.pubHandler);
+    rt.repositoryUnsubscribe?.();
     clearTimeout(rt.toastTimer);
     clearTimeout(rt.filterTimer);
     rt = null;

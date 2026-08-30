@@ -8,7 +8,7 @@ const planInputSchema = z.object({
     day: z.number(), theme: z.string(),
     items: z.array(z.object({
       id: z.string(), time: z.string(), title: z.string(), description: z.string(),
-      durationMinutes: z.number(), location: z.string(), lockedWish: z.boolean().optional(),
+      durationMinutes: z.number(), location: z.string(), lockedWish: z.boolean().optional(), wishRefs: z.array(z.string()).optional(),
     })),
   })),
 });

@@ -21,6 +21,10 @@ const buildEnvironment = {
   MINIFLARE_REGISTRY_PATH: ".wrangler/registry",
 };
 
+if (process.env.NEXT_PUBLIC_QIJING_API_BASE_URL && !/^https:\/\//i.test(process.env.NEXT_PUBLIC_QIJING_API_BASE_URL)) {
+  throw new Error("QIJING_API_BASE_URL must use HTTPS for GitHub Pages deployments.");
+}
+
 await new Promise((resolve, reject) => {
   const child = spawn(process.execPath, [vinextCli, "build"], {
     cwd: projectRoot,

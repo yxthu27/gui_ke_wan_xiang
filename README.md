@@ -65,6 +65,7 @@ flowchart LR
 - 四栏产品外壳：路线、随逛、个人、广场。
 - 13 个启境产品页面及完整页面流转。
 - 六问选项、数量限制、输入校验和辅助文字输入。
+- 中文语音听写（ASR）、问题重播与用户主动启用后的回复朗读（TTS）。
 - 心愿第三项自动替换、风物标签删除和明确的选择反馈。
 - 客态结晶、行程结果、地图与微调页面共享真实用户答案。
 - 节奏、转场、住处设置的局部微调。
@@ -96,6 +97,10 @@ flowchart LR
 | Pages + 独立 API | 完整 | 调用外部 HTTPS 后端 | 正式部署方向 |
 
 GitHub Pages 无法运行 `/api/qijing/*`，也不能安全保存 AI 密钥。正式启用 AI 时，应把接口部署到 Cloudflare Worker 或其他服务端环境，并通过公开的 `NEXT_PUBLIC_QIJING_API_BASE_URL` 指向该后端。
+
+### 浏览器语音
+
+语音输入使用浏览器 Web Speech Recognition，朗读使用 Speech Synthesis；原始录音不会由本项目上传或保存。麦克风能力要求 HTTPS 或 localhost，并以 Chrome/Edge 的支持较完整。Safari、Firefox、内置 WebView 或用户拒绝权限时会显示原因并保留文字输入，语音能力不会阻塞六问流程。
 
 ## 项目结构
 
@@ -139,6 +144,8 @@ STEPFUN_BASE_URL=https://api.stepfun.com/step_plan/v1
 STEPFUN_API_KEY=你的服务端接口密钥
 STEPFUN_CHAT_MODEL=step-3.7-flash
 STEPFUN_TIMEOUT_MS=20000
+STEPFUN_CHAT_TIMEOUT_MS=12000
+STEPFUN_PLAN_TIMEOUT_MS=45000
 STEPFUN_IMAGE_BASE_URL=https://api.stepfun.com/v1
 STEPFUN_IMAGE_MODEL=step-image-edit-2
 STEPFUN_IMAGE_TIMEOUT_MS=65000
@@ -154,6 +161,7 @@ STEPFUN_IMAGE_TIMEOUT_MS=65000
 | `POST /api/qijing/plan` | 根据客态结晶生成结构化行程 |
 | `POST /api/qijing/refine` | 在保护心愿与边界的前提下微调现有行程 |
 | `POST /api/qijing/cutout` | 用 StepFun 图像编辑生成纯色背景蒙版，供个人页提取透明主体 |
+| `GET /api/qijing/health` | 返回 AI 是否已配置及当前运行模式；不会暴露密钥，也不冒充供应商连通性探测 |
 
 ### 个人页 AI 抠图
 

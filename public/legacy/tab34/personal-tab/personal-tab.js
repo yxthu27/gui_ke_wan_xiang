@@ -9,6 +9,31 @@
     experience: "体验"
   };
 
+  const FAVORITE_STORAGE_KEY = "guike-favorite-places-v1";
+  const SAVED_JOURNEY_STORAGE_KEY = "guike-saved-journeys-v1";
+  const Repository = window.GuikeRepository;
+
+  function loadStoredArray(key) {
+    if (Repository) {
+      const state = Repository.read();
+      if (key === FAVORITE_STORAGE_KEY) return state.favoritePlaces;
+      if (key === SAVED_JOURNEY_STORAGE_KEY) return state.savedJourneys;
+    }
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch (_error) { return []; }
+  }
+
+  function saveStoredArray(key, value) {
+    if (Repository) {
+      if (key === FAVORITE_STORAGE_KEY) { Repository.setFavoritePlaces(value); return true; }
+      if (key === SAVED_JOURNEY_STORAGE_KEY) { Repository.setSavedJourneys(value); return true; }
+    }
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (_error) { return false; }
+  }
+
   const SUBJECT_COPY = {
     cat: { label: "猫", name: "黔灵的小懒猫", desc: "午后的黔灵山脚，一只橘猫蜷在石阶旁晒太阳。" },
     embroidery: { label: "苗绣", name: "山纹苗绣", desc: "靛蓝布面上，针脚把山川、花叶与祝愿悄悄缝在一起。" },
@@ -144,6 +169,10 @@
   }
   const GuikePlan = {
     load() {
+      if (Repository) {
+        const shared = Repository.read().activePlan;
+        if (shared && Array.isArray(shared.days) && shared.days.length) return clone(shared);
+      }
       try {
         const parsed = JSON.parse(localStorage.getItem(PLAN_STORAGE_KEY) || "null");
         return parsed && Array.isArray(parsed.days) && parsed.days.length ? parsed : defaultPlan();
@@ -151,7 +180,10 @@
     },
     save(plan) {
       plan.updatedAt = new Date().toISOString();
-      try { localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plan)); } catch (_error) { /* 存储不可用时仅内存保存 */ }
+      try {
+        if (Repository) Repository.savePlan(plan);
+        else localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plan));
+      } catch (_error) { /* 存储不可用时仅内存保存 */ }
       window.dispatchEvent(new CustomEvent("guike:plan-updated", { detail: clone(plan) }));
       return plan;
     },
@@ -172,6 +204,57 @@
     }
   };
   window.GuikePlan = GuikePlan;
+
+  function mergeById(base, incoming) {
+    const map = new Map((base || []).map(item => [item.id, item]));
+    (incoming || []).forEach(item => { if (item?.id) map.set(item.id, Object.assign({}, map.get(item.id) || {}, item)); });
+    return [...map.values()];
+  }
+
+  function syncStoredState(runtime) {
+    const shared = Repository?.read();
+    runtime.data.favoritePlaces = mergeById(clone(DEFAULT_DATA.favoritePlaces), loadStoredArray(FAVORITE_STORAGE_KEY));
+    runtime.data.savedJourneys = mergeById(clone(DEFAULT_DATA.savedJourneys), loadStoredArray(SAVED_JOURNEY_STORAGE_KEY)).map(enrichSavedJourney);
+    if (shared) {
+      if (!shared.initialized?.wanxiang) Repository.setWanxiangItems(runtime.data.wanxiangItems);
+      else runtime.data.wanxiangItems = clone(shared.wanxiangItems);
+    }
+    const plan = GuikePlan.load();
+    const planJourneys = (plan.days || []).map((day, index) => ({
+      id: day.id || `main-plan-${day.date || index + 1}`,
+      date: day.date || addDaysISO(new Date().toISOString().slice(0, 10), index),
+      city: day.city || "贵州",
+      subtitle: day.title || "已保存的启境行程",
+      placeCount: Array.isArray(day.places) ? day.places.length : 0,
+      wanxiangCount: 0,
+      plannedPlaces: (day.places || []).map((place, placeIndex) => ({ id: `${day.id || index}-${placeIndex}`, name: place.name, time: place.time || "待定", visited: false })),
+      routePoints: day.routePoints || [],
+      source: day.source || "qijing",
+    }));
+    const unrelated = (runtime.data.journeys || []).filter(item => !String(item.id).startsWith("qijing-day-") && !String(item.id).startsWith("day-") && !String(item.id).startsWith("main-plan-"));
+    runtime.data.journeys = mergeById(planJourneys, unrelated);
+    const today = new Date().toISOString().slice(0, 10);
+    const activeDay = (plan.days || []).find(day => day.date === today) || (plan.days || [])[0];
+    if (activeDay) {
+      runtime.data.todayJourney = Object.assign({}, runtime.data.todayJourney, {
+        id: activeDay.id || `main-plan-${activeDay.date || "today"}`,
+        date: activeDay.date || today,
+        city: activeDay.city || "贵州",
+        subtitle: activeDay.title || "已保存的启境行程",
+        distance: routeDistanceKm(activeDay.routePoints || []),
+        plannedPlaces: (activeDay.places || []).map((place, index) => ({
+          id: place.id || `main-place-${index + 1}`,
+          name: place.name || place.title || "待确认地点",
+          time: place.time || "待定",
+          lat: place.lat,
+          lng: place.lng,
+          visited: Boolean(place.visited)
+        })),
+        visitedPlaces: (activeDay.places || []).filter(place => place.visited).map((place, index) => place.id || `main-place-${index + 1}`),
+        routePoints: activeDay.routePoints || []
+      });
+    }
+  }
 
   /* —— 数据增强工具 —— */
   function hashCode(value) {
@@ -608,9 +691,25 @@
       toastTimer: 0,
       clickTimer: 0
     };
-    runtime.data.savedJourneys = (runtime.data.savedJourneys || []).map(enrichSavedJourney);
+    syncStoredState(runtime);
     initializeStickerPositions(runtime);
     bindEvents(runtime);
+    window.addEventListener("guike:plan-updated", () => {
+      if (!instance) return;
+      syncStoredState(instance);
+      renderAll(instance);
+    }, { signal: runtime.aborter.signal });
+    window.addEventListener("storage", event => {
+      if (!instance || ![PLAN_STORAGE_KEY, FAVORITE_STORAGE_KEY, SAVED_JOURNEY_STORAGE_KEY].includes(event.key)) return;
+      syncStoredState(instance);
+      renderAll(instance);
+    }, { signal: runtime.aborter.signal });
+    runtime.repositoryUnsubscribe = Repository?.subscribe((_shared, section) => {
+      if (!instance) return;
+      if (!["plan", "favorites", "savedJourneys", "wanxiang", "all"].includes(section)) return;
+      syncStoredState(instance);
+      renderAll(instance);
+    });
     renderAll(runtime);
     // 他人行径/借入行径也升级为真实道路 geometry（缓存共享，同路线只请求一次）
     (runtime.data.savedJourneys || []).forEach(item => upgradeJourneyGeometry(runtime, item, () => renderCollection(runtime)));
@@ -710,7 +809,8 @@
       body.innerHTML = runtime.data.journeys.length ? `<div class="gx-personal-journey-list">${runtime.data.journeys.map(item => journeyCard(runtime, item, false)).join("")}</div>` : `<div class="gx-personal-empty"><div><strong>还没有保存的行径。</strong></div></div>`;
       return;
     }
-    body.innerHTML = runtime.data.savedJourneys.length ? `<div class="gx-personal-journey-list">${runtime.data.savedJourneys.map(item => journeyCard(runtime, item, true)).join("")}</div>` : `<div class="gx-personal-empty"><div><strong>去广场看看别人的贵州。</strong><button type="button" data-action="switch-square">去广场</button></div></div>`;
+    const visibleSaved = runtime.data.savedJourneys.filter(item => item.saved !== false);
+    body.innerHTML = visibleSaved.length ? `<div class="gx-personal-journey-list">${visibleSaved.map(item => journeyCard(runtime, item, true)).join("")}</div>` : `<div class="gx-personal-empty"><div><strong>去广场看看别人的贵州。</strong><button type="button" data-action="switch-square">去广场</button></div></div>`;
   }
 
   function journeyCard(runtime, item, saved) {
@@ -718,7 +818,9 @@
     const points = item.routePoints || sourceJourney.routePoints || runtime.data.todayJourney.routePoints;
     const journey = Object.assign({}, sourceJourney, { routePoints: points });
     const stops = saved ? (item.places?.length || 0) : (item.placeCount || sourceJourney.plannedPlaces?.length || 0);
-    const dist = saved ? Number(item.dist) || routeDistanceKm(points) : Number(runtime.data.todayJourney.distance) || routeDistanceKm(points);
+    const dist = saved
+      ? Number(item.dist) || routeDistanceKm(points)
+      : Number(item.distance) || (item.id === runtime.data.todayJourney.id ? Number(runtime.data.todayJourney.distance) || routeDistanceKm(points) : routeDistanceKm(item.routePoints || []));
     const saves = saved ? (item.saves || 0) : (item.wanxiangCount || 0);
     const cityPinyin = CITY_PINYIN[item.city] || "GUIZHOU";
     const serial = `GX-${String(hashCode(item.id) % 9000 + 1000)}`;
@@ -915,6 +1017,7 @@
       runtime.frameContentZIndex = runtime.frameContent.style.zIndex;
       runtime.frameContent.style.zIndex = "6";
     }
+    window.parent.postMessage({ type: "guike:modal", action: "open", modalId: name }, window.location.origin);
     window.setTimeout(() => overlay.querySelector("button, input, [tabindex]")?.focus(), 20);
   }
 
@@ -927,6 +1030,7 @@
     runtime.activeModal = null;
     runtime.app.style.overflow = "";
     if (runtime.frameContent) runtime.frameContent.style.zIndex = runtime.frameContentZIndex;
+    window.parent.postMessage({ type: "guike:modal", action: "close" }, window.location.origin);
     if (restoreFocus) runtime.lastFocus?.focus?.();
   }
 
@@ -1303,6 +1407,7 @@
     runtime.data.wanxiangItems.unshift(runtime.pendingWanxiang);
     runtime.data.user.wanxiangCount = Math.max(runtime.data.user.wanxiangCount || 0, runtime.data.wanxiangItems.length);
     runtime.stickerPositions[runtime.pendingWanxiang.id] = { x: 55, y: 58, scale: .92, rotate: -4 };
+    Repository?.setWanxiangItems(runtime.data.wanxiangItems);
     renderAll(runtime);
     closeModal(runtime);
     showToast(runtime, "万象已落在今日山纹上");
@@ -1339,6 +1444,7 @@
     const item = runtime.data.wanxiangItems.find(entry => entry.id === runtime.activeWanxiangId);
     if (!item) return;
     item.customName = runtime.app.querySelector("[data-detail-name]").value.trim() || item.subjectName;
+    Repository?.setWanxiangItems(runtime.data.wanxiangItems);
     const menu = runtime.app.querySelector("[data-more-menu]");
     if (menu) menu.hidden = true;
     renderWanxiang(runtime);
@@ -1350,6 +1456,7 @@
     if (index < 0) return;
     const [removed] = runtime.data.wanxiangItems.splice(index, 1);
     delete runtime.stickerPositions[removed.id];
+    Repository?.setWanxiangItems(runtime.data.wanxiangItems);
     renderAll(runtime);
     closeModal(runtime);
     showToast(runtime, "这一枚万象已移出收藏");
@@ -1363,6 +1470,7 @@
       const end = runtime.data.todayJourney.routePoints.at(-1);
       item.location = Object.assign({ placeName: "行径终点附近" }, end);
     }
+    Repository?.setWanxiangItems(runtime.data.wanxiangItems);
     renderRoute(runtime);
     showToast(runtime, "万象已落在今日行径上");
   }
@@ -1532,6 +1640,7 @@
     if (!item) return;
     item.saved = !item.saved;
     item.saves = Math.max(0, (item.saves || 0) + (item.saved ? 1 : -1));
+    saveStoredArray(SAVED_JOURNEY_STORAGE_KEY, runtime.data.savedJourneys);
     updateSavedDock(runtime, item);
     showToast(runtime, item.saved ? `已收藏 ${item.author} 的行径` : "已取消收藏（不影响借此一程）");
   }
@@ -2118,6 +2227,7 @@
     if (!instance || !item) return;
     instance.data.wanxiangItems.unshift(clone(item));
     instance.stickerPositions[item.id] = { x: 52, y: 58, scale: 1, rotate: 0 };
+    Repository?.setWanxiangItems(instance.data.wanxiangItems);
     renderAll(instance);
   }
 
@@ -2148,7 +2258,15 @@
     const idx = instance.data.savedJourneys.findIndex(item => item.id === entry.id);
     if (idx >= 0) instance.data.savedJourneys[idx] = Object.assign(instance.data.savedJourneys[idx], entry);
     else instance.data.savedJourneys.unshift(entry);
+    if (!saveStoredArray(SAVED_JOURNEY_STORAGE_KEY, instance.data.savedJourneys)) return false;
     renderCollection(instance);
+    return true;
+  }
+
+  function syncStorage() {
+    if (!instance) return false;
+    syncStoredState(instance);
+    renderAll(instance);
     return true;
   }
 
@@ -2175,11 +2293,12 @@
   function destroy() {
     if (!instance) return;
     instance.aborter.abort();
+    instance.repositoryUnsubscribe?.();
     stopCamera(instance);
     window.clearTimeout(instance.toastTimer);
     window.clearTimeout(instance.clickTimer);
     instance = null;
   }
 
-  window.GuikePersonal = { mount, update, addWanxiang, addSavedJourney, openJourney: openJourneyPublic, openSavedJourney: openSavedJourneyPublic, generatePostcard, destroy, AIAdapter };
+  window.GuikePersonal = { mount, update, addWanxiang, addSavedJourney, syncStorage, openJourney: openJourneyPublic, openSavedJourney: openSavedJourneyPublic, generatePostcard, destroy, AIAdapter };
 }());
